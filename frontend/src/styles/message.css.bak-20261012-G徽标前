@@ -1,0 +1,290 @@
+/* ============================================================
+   视觉 3.0 · T0.5 拆分（2026-10-04）
+   来源=base.css「消息层」节：.msg 系/role/hint/chips（原 L179-215）、
+   typing/waiting/offtopic+ev（原 L260-281，blink/pulse keyframes 在
+   motion.css）、540px 窄屏断点媒体块（原 L300-305 整块——含 :root
+   --jump-b 覆写与 .msg.user 放宽，本文件晚于 skeleton.css 加载故
+   先基后覆两对均保持）、srcs 出处条全套（原 L405-434）、act-bar
+   （原 L436-460）、pv-card 预览卡（原 L465-499）、反馈瞬时报文/追问条
+   两块（原 L587-599；两组件已随 5.0 反馈批4 退役删除，类名穷举=
+   差异清单 §十六，本文件不复述字面）。
+   纯搬运：零 token 改值、零 DOM 改动；文件内规则保持原 base.css 出现顺序。
+   ============================================================ */
+/* ============================================================
+   视觉 3.0 · T3 施工（2026-10-04）：消息面精雕
+   真源=运营/视觉3.0-20261004/基调稿与组件语言-3.0.md（冻结）；
+   拍板=断点三节31（基调稿采纳照稿施工）。本件改动面：
+   §3.2 role 肩题化（裁决 #16，fs-12→fs-11/ls .12em/uppercase+tabular）；
+   §3.4 出处条顶线升档 --line→--rule-mid（裁决 #11）+「出处：」引导词
+   肩题化（裁决 #16）；§3.11 追问 chip 补 tabular-nums（裁决 #21 A-9
+   收编面；该件已随 5.0 反馈批4 退役）。
+   复核登记：pv-head 条号 tabular-nums 已在位（批B 落），零改动。
+   ============================================================ */
+/* ============================================================
+   视觉 3.0 · T5 施工（2026-10-04）：微观与移动打磨
+   真源=运营/视觉3.0-20261004/基调稿与组件语言-3.0.md；拍板=断点三节31。
+   本件改动面：①死样式清理——.hint/.chips/.chip/.chip:active 四块删除
+   （空状态已被 T2 hero 取代，DOM 零匹配：grep '\.chip\b' frontend/src
+   --include='*.vue' --include='*.ts'=0；tests/test_frontend_actions.py:482-484
+   亦以 count==0 断言其不存在；追问条 chip 为另一类当时保留——后随
+   5.0 反馈批4 退役，见 §十六）；②≤540
+   --jump-b 兜底 216→176px 随 icp 紧凑化重估（skeleton.css T5 块注记，
+   App.vue:796 ResizeObserver 实测覆写为运行时真值）。触控热区补齐在
+   motion.css（指针模态横切面归属）。
+   ============================================================ */
+/* ============================================================
+   视觉 4.0 方向一 · T-c 材质批（2026-10-04）：回合分隔线+卡片化
+   真源=运营/视觉4.0-方向1-20261004/基调稿与组件语言-方向1.md（冻结）。
+   本件改动面：①§三 裁决 #12 回合分隔线——bot 轮尾全宽 rule-mid 中性线
+   +回合间距 32→44px（@supports 门控，:has() 不支持时回退 3.0 现状）；
+   ②§四 裁决 #15 卡片化三件套——追问 chip 补投影（描边 --g-400/底
+   --surface 既有在位；该件后随 5.0 反馈批4 退役）、srcs-it 底
+   surface-2→--surface+补投影；icp 徽章投影落点在
+   skeleton.css .icp a（本批文件清单外，报告登记待归属代理补落）。
+   ============================================================ */
+/* ============================================================
+   视觉 5.0 · T-c 施工（2026-10-04）：消息面平排无气泡＋材质换 token
+   真源=运营/视觉5.0-现代极简-20261004/基调-5.0.md（§③材质终值）；
+   拍板=断点三节35＋决策/ADR-0017 决策⑤（现代极简，Linear/Notion 风）。
+   本件改动面：
+   ①.msg.user 强调色气泡退役→浅灰底圆角块右对齐：亮套 --g-100、暗套
+     --surface-2（--g-* 灰阶两主题单套，暗套必须覆写），圆角随 --r-2
+     （5.0 终值 12px），无边框零投影；文字色 --accent-tink→--ink；
+     max-width 78%（≤540 放宽 88%）现状口径不变。对齐勘误：4.0 现状
+     margin 简写 auto 位在右（实渲染左置，与本节旧注释"右置"不符），
+     本次按 5.0 任务书落右对齐（margin-left:auto）——差异清单登记。
+   ②.msg.bot 平排核对登记：3.0 文档流以来本就无背景无边框无投影，
+     全列宽（--col 容器）平排零改动；.txt 行长 40em 上限=可读性件保留
+     （正文排印第一优先：fs-16/行高 1.75/段距 10px 维持）。
+     （2026-10-04 反馈批2 注：字号升档 fs-17、40em 行长上限随 --col 880
+     加宽退役——被本节取代，见文件尾反馈批2 横幅与差异清单 §十四。）
+   ③4.0 回合分隔线结构原样保留（::after+@supports 门控+44px 间距零动，
+     颜色 --rule-mid 核对通过）。
+   ④srcs-it/追问 chip（该件已随 5.0 反馈批4 整组退役——类名字面本文件
+     刻意不复述守 grep 清零口径，穷举=差异清单 §十六）卡片投影退役
+     （该 token 5.0 已删）→「细线+浅底」
+     两件套：描边（--line/--g-400）+浅底（--surface）既有在位，只删投影；
+     act-bar/fb/srcs-cc 系本已扁平零改动；pv-card 浮层档投影保留（两档
+     不混用纪律沿 4.0）。
+   ⑤err 态可辨性不弱化：--err-tint 底+3px --err 左线维持；typing/waiting
+     动效结构零动只随 token。
+   ⑥540px 断点核查：user 88% 放宽保留；bot 平排无左右边距/内衬债，
+     --jump-b 兜底覆写维持；零改动。
+   ============================================================ */
+/* ============================================================
+   视觉 5.0 · 反馈批2（2026-10-04 桌面布局校准）＋反馈批4（同日 引导件退役）
+   ------------------------------------------------------------
+   批2 依据=用户上云实见反馈「电脑上正文部分太小」（登记=运营/视觉5.0-现代
+   极简-20261004/T-b-DOM差异清单.md §十四）：阅读字号升档 .msg.bot .txt
+   fs-16→var(--fs-17)（行高 1.75 零改；--col 720→880 同批 tokens.css，
+   880/17≈48 汉字/行落进 45-75 可读区间西文口径、汉字密排亦在 40 行宽
+   舒适带上沿）。40em 行长上限随批退役：上限存在理由=720 列内防 40+ 汉字
+   超长行，880/17 新口径下 40em(=680px) 反而截短于列宽、与「加宽」诉求
+   相抵——行长控制职能移交 --col 单点（裁决与备选登记=差异清单 §十四）。
+   代码块/表格/--fs-11 技术元数据面零改；≤540 密排口径零改（375 内容宽
+   351px−0 内衬=351/17≈20 汉字/行，word-break 既有兜底，横滚 0 静态成立）。
+   批4 依据=用户指令「追问引导框框不要；点赞/踩按钮也不要」（登记=§十六）：
+   追问引导条与反馈瞬时报文两组样式块整体删除（退役类名字面本文件刻意
+   不复述守 grep 清零口径，穷举清单=差异清单 §十六；DOM/逻辑在
+   BotMessage.vue 同批）；act-bar 容器与复制/重新生成/时刻/用量四件样式
+   零改；pv-card/srcs 零改；hero 首屏 .hero-chip 用户拍板件保留零动
+   （词族注意区分）。motion.css 的追问 chip hover/过渡死规则=跨边界
+   登记不动手（文件不在本批边界）。
+   ============================================================ */
+/* ============================================================
+   视觉 5.0 · 反馈批5（2026-10-04 桌面正文再升档，A 级流程）
+   ------------------------------------------------------------
+   依据=用户实见反馈（数值冻结与 T-d3 并行同值；登记=运营/视觉5.0-现代极简-
+   20261004/T-b-DOM差异清单.md §十七）：阅读字号再升档 .msg.bot .txt
+   fs-17→var(--fs-18)（行高 1.75 零改；--col 880→940 同批 tokens.css，
+   940/18≈52 汉字/行全角上限、混排 ≈48-52 仍落 45-75 可读区间；批2 的
+   880/17≈48 口径被本批取代，该横幅历史登记 append-only 不改）。行长控制
+   职能仍归 --col 单点（40em 上限批2 已退役，回退位与备选登记=§十四.3）。
+   本件消费面声明仅此一处；markdown.css h3=fs-17（边界文件零触碰）自本批起
+   低于正文一档——跨边界登记只报不修（§十七.7）。代码块 13px/表格 fs-15/
+   --fs-11 技术元数据面零改；≤540 密排口径零改（375 内容宽 351/18≈19.5
+   汉字/行，word-break 既有兜底，横滚 0 静态成立）。
+   ============================================================ */
+/* ============ 消息层（不对称）：用户=右置浅灰圆角块；AI=全列宽文档流平排 ============ */
+.msg { word-break: break-word; }
+.msg.user {
+  margin: 32px 0 0 auto; width: fit-content; max-width: 78%;
+  /* 2.0 §1.4：回合边界 28→32px（增强"一问一答"分组读法）；回合内部 10px 维持 */
+  /* 5.0 T-c：浅灰底圆角块（亮 --g-100），无描边零投影；右对齐=margin-left auto */
+  background: var(--g-100); color: var(--ink);
+  border-radius: var(--r-2);
+  padding: 9px 14px; font-size: var(--fs-15); line-height: 1.65; white-space: pre-wrap;
+}
+/* 5.0 T-c：暗套覆写——灰阶 --g-* 两主题单套（亮灰值），暗底浅灰块不可用，
+   换表面组 --surface-2（对 bg #121212 分层可辨，ink 文本对比充足） */
+:root[data-theme="dark"] .msg.user { background: var(--surface-2); }
+.msg.bot { margin-top: 10px; } /* 5.0 T-c 核对：无背景无边框无投影，全列宽平排（3.0 起既有，零改动登记） */
+.msg:first-child { margin-top: 8px; }
+/* 4.0 方向一 §三 裁决 #12：回合分隔线=对话态首屏结构锚（bot 轮尾全宽中性线
+   破文字墙）。挂 .msg.bot 尾部、下一相邻兄弟为 user 时画线（.msg user 与
+   BotMessage 根 .msg bot 为 thread 下同级相邻兄弟，App.vue v-for 无包裹层）；
+   首条消息与流式尾轮天然无线；伪元素不入 T2 DOM 断言面。@supports 门控：
+   :has() 不支持时无线+间距维持 32px=完全回退 3.0 现状（渐进增强；
+   Chromium 105+/Safari 15.4+/Firefox 121+ 全绿）。 */
+@supports selector(:has(+ .msg.user)) {
+  .msg.bot:has(+ .msg.user)::after {
+    content: ""; display: block;
+    border-top: 1px solid var(--rule-mid); /* 中性线，线制语言同族（3.0 §1.4 用途穷举表增列条） */
+    margin-top: 14px;
+  }
+  .msg.user:not(:first-child) { margin-top: 44px; } /* 回合间距 32→44px（线居间距内） */
+}
+/* 3.0 §3.2 role 肩题化（裁决 #16，A-2，CSS-only 类名不变）：fs-12→fs-11、
+   字距 .03em→.12em（中文可承受上限 ≈.15em 内）、加 uppercase（拉丁零副作用）
+   +tabular-nums；色维持 ink-3（改值后对 bg 4.62 ✓） */
+.msg.bot .role {
+  font-size: var(--fs-11); color: var(--ink-3); font-weight: 500;
+  letter-spacing: .12em; margin-bottom: 2px;
+  text-transform: uppercase; font-variant-numeric: tabular-nums;
+}
+.msg.bot .txt {
+  font-size: var(--fs-18); line-height: 1.75; /* 5.0 反馈批5：阅读字号 fs-17→fs-18 再升档（行高 1.75 零改；批2 fs-16→17 历史见该横幅） */
+  /* 5.0 反馈批5：行长控制仍归 --col 单点（880→940 同批 tokens.css），
+     940/18≈52 汉字/行；40em 上限批2 已退役，裁决与备选登记=差异清单 §十四、
+     本批登记=§十七 */
+}
+.msg.bot.err .txt { white-space: pre-wrap; } /* 错误消息不走 markdown，保持纯文本折行 */
+.msg.bot.err {
+  margin-top: 10px; border-left: 3px solid var(--err);
+  background: var(--err-tint); border-radius: 0 var(--r-1) var(--r-1) 0;
+  padding: 10px 14px; font-size: var(--fs-13); color: var(--err);
+}
+/* T5（2026-10-04）死样式出清：.hint/.chips/.chip/.chip:active 四块原在此
+   （空状态样式，T2 hero 落地后 DOM 零匹配），整块删除——预登记见文件头 T5 横幅 */
+.typing::after { content: "▍"; animation: blink 1s infinite; color: var(--ink-2); }
+/* 流式等待指示：首 delta 前的三点脉冲，delta 到达后切回文本光标；
+   超 2 秒仍无首 delta 换文案（等待心理暗示，2026-09-21 批1） */
+.msg.bot .txt.waiting::after {
+  content: "···"; color: var(--ink-3); margin-left: 4px;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+.msg.bot .txt.waiting.waitlong::after { content: "正在检索语料…"; }
+/* off_topic 提示（低分未命中语料，2026-09-21 批1）：气泡顶部一行说明 */
+.msg.bot .offtopic {
+  font-size: var(--fs-12); color: var(--ink-3); line-height: 1.6;
+  margin: 2px 0 6px; padding-bottom: 5px; border-bottom: 1px dashed var(--line);
+} /* offtopic（未命中语料）维持 1.0 中性款 */
+/* 2.0 §3.3 开口：证据不足（evInsufficient）升格警示——3px --warn-ink 左边线+
+   浅 warn tint 底+警示文本色（答案可信度降级信号，中性样式与其风险等级不匹配） */
+.msg.bot .offtopic.ev {
+  color: var(--warn-ink); border-bottom: none;
+  border-left: 3px solid var(--warn-ink); background: var(--ev-tint);
+  padding: 6px 10px; border-radius: 0 var(--r-1) var(--r-1) 0;
+}
+/* ≤540 断点：2.0 §3.1 移动端用户气泡 max-width 78%→88%；
+   --jump-b 兜底值 T5 随 icp 紧凑化重估：窄屏两行态页脚 ≈169px（原 ≈207）
+   →216→178px（+9 间隙；App.vue ResizeObserver 挂载即实测覆写，本值仅为
+   预测量/无 JS 兜底——skeleton.css T5 块同注） */
+@media (max-width: 540px) {
+  :root { --jump-b: 178px; }
+  .msg.user { max-width: 88%; }
+}
+/* 出处条：技术标识符用等宽药丸 chip + 表格数字；折叠/展开逻辑沿用 */
+/* 3.0 §3.4 出处条顶线升档（裁决 #11，C-3.1）：--line→--rule-mid（出处条是
+   「正文↔证据」结构界，比 hr 段落界重一级才配位） */
+.srcs { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--rule-mid);
+        font-size: var(--fs-12); line-height: 1.6; color: var(--ink-3); white-space: normal; }
+/* 3.0 §3.4 「出处：」引导词肩题化（裁决 #16）：fs-11+ls .12em；色维持 ink-3
+   （继承 .srcs）；字串固定=BotMessage.vue 模板非动态，fs-11 用途合规=元数据 */
+.srcs .srcs-t { font-size: var(--fs-11); letter-spacing: .12em; }
+.srcs .srcs-it {
+  display: inline-block; font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+  font-size: var(--fs-12); background: var(--surface); border: 1px solid var(--line);
+  border-radius: 999px; padding: 1px 8px; margin: 3px 6px 3px 0; overflow-wrap: anywhere;
+  /* 5.0 T-c：投影退役（token 已删）——「细线（--line）+浅底（--surface）」两件套在位，零投影 */
+  cursor: pointer; /* 2.0 §3.4：chip 可点（tap 优先开预览卡），编号药丸维持 */
+} /* 长规范号/条号在窄屏不撑破版心 */
+.srcs.closed .srcs-list .srcs-it:nth-child(n+3) { display: none; } /* 默认只露前 2 条 */
+.srcs .srcs-x { display: inline-block; border: none; background: none; color: var(--ink-2);
+        font-size: var(--fs-12); line-height: 1.6; cursor: pointer; padding: 4px 6px; margin-left: 0;
+        text-decoration: underline dotted; } /* 扩点击热区：移动端拇指可达 */
+/* 深度批A（2026-09-22）：引文核实总标 chip（出处条头部）与逐源徽标（源行尾）。
+   类名 v-* / l-* 只由前端 verdict/label 枚举白名单产生（非枚举不渲染），无注入面。
+   2.0 §3.5/3.6 债务修正：亮色文本色深化——supports #2e9e63→--ok-ink（3.3→5.2:1）、
+   partial #b8860b→--warn-ink（3.4→5.2:1）；暗色 token 层自动提亮（7.6/7.1:1）。 */
+.srcs .srcs-cc-all, .srcs .srcs-cc, .srcs .srcs-gate {
+  display: inline-block; font-size: var(--fs-11); line-height: 1.6; border-radius: 999px;
+  padding: 0 7px; border: 1px solid var(--line-strong); color: var(--ink-2);
+  background: var(--surface-2); vertical-align: middle; white-space: nowrap;
+}
+.srcs .srcs-cc-all { margin: 3px 6px 3px 0; }
+.srcs .srcs-gate { margin: 3px 6px 3px 0; padding: 0 6px; background: none; }
+.srcs .srcs-gate.g-ok { color: var(--ok-ink); border-color: var(--ok-ink); }
+.srcs .srcs-gate.g-bad { color: var(--err); border-color: var(--err); }
+.srcs .srcs-cc { margin-left: 5px; padding: 0 6px; background: none; }
+.srcs .srcs-cc.v-supports { color: var(--ok-ink); border-color: var(--ok-ink); }
+.srcs .srcs-cc.v-partial { color: var(--warn-ink); border-color: var(--warn-ink); }
+.srcs .srcs-cc.v-unsupported { color: var(--err); border-color: var(--err); }
+
+/* ============ 批B（2026-10-03）：消息操作条 act-*；批次A2 按 2.0 §3.11 重刷 ============
+   常显低调度（ink-3）、行高 24px、距出处条 8px、按钮间 4px；时间戳右置
+   （mono 12px）+token 徽标（mono 11px 药丸）；流式中整条隐藏（组件层）。
+   图标版（16px SVG）因 #thread DOM 审计把 svg 列违禁元素而维持纯文字（差异登记）。 */
+.msg.bot .act-bar {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 4px;
+  margin-top: 8px; min-height: 24px; font-size: var(--fs-12); color: var(--ink-3);
+}
+.act-bar .act-btn {
+  border: none; background: none; color: var(--ink-3); cursor: pointer;
+  font-family: inherit; font-size: var(--fs-12); line-height: 1.4;
+  padding: 3px 8px; border-radius: var(--r-1);
+}
+.act-bar .act-btn:disabled { opacity: .45; cursor: default; }
+.act-bar .act-time {
+  margin-left: auto; font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+  font-size: var(--fs-12); color: var(--ink-3); padding: 3px 4px;
+}
+/* 历史恢复态（ts transient 不入库）：tok 徽标紧跟按钮时自行接管右置 */
+.act-bar .act-btn + .act-tok { margin-left: auto; }
+.act-bar .act-tok {
+  font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+  font-size: var(--fs-11); color: var(--ink-3); background: var(--surface-2);
+  border: 1px solid var(--line); border-radius: 999px; padding: 0 7px;
+}
+
+/* ============ 批B：出处 chip 预览卡 pv-*；批次A2 按 2.0 §3.4 重刷 ============
+   结构=头部标识行→quote 摘录（滚动区）→底行 score 药丸+verdict；
+   320px 宽（375 屏取 min(320, 100vw−48)）、max-height 280px、r-2、surface 底、
+   line-strong 描边、--shadow-pop；卡锚 chip 下方 6px，JS 侧出界翻转/钳制。 */
+.srcs .srcs-it { position: relative; } /* 卡片定位锚：relative 无位移，不改既有视觉 */
+.pv-card {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 7;
+  display: flex; flex-direction: column;
+  width: max-content; max-width: min(320px, calc(100vw - 48px));
+  max-height: 280px; overflow: hidden;
+  background: var(--surface); border: 1px solid var(--line-strong);
+  border-radius: var(--r-2); box-shadow: var(--shadow-pop);
+  padding: 0; margin: 0; font-family: var(--font-sans);
+  white-space: normal; text-align: left; word-break: break-word;
+}
+.pv-card .pv-head {
+  display: block; flex: none; padding: 8px 12px 6px;
+  border-bottom: 1px solid var(--line);
+  font-family: var(--font-mono); font-size: var(--fs-12); color: var(--ink-2);
+  font-variant-numeric: tabular-nums; overflow-wrap: anywhere;
+}
+.pv-card .pv-quote {
+  display: block; flex: 1; min-height: 0; overflow-y: auto;
+  padding: 8px 12px; font-size: var(--fs-13); line-height: 1.6; color: var(--ink-2);
+  scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent;
+}
+.pv-card .pv-foot {
+  display: flex; flex: none; gap: 8px; align-items: center;
+  padding: 6px 12px 8px; border-top: 1px solid var(--line);
+  font-family: var(--font-mono); font-size: var(--fs-11); color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.pv-card .pv-score {
+  border: 1px solid var(--line-strong); border-radius: 999px; padding: 0 7px;
+}
+/* 5.0 反馈批4（2026-10-04）：反馈瞬时报文（"已记录"等 1.5s 自清文案）样式块
+   随点赞/踩组件退役删除（穷举=差异清单 §十六，类名字面刻意不复述） */
+/* 5.0 反馈批4（2026-10-04）：追问引导条两样式块（容器+chip，含 3.0 裁决 #21
+   tabular-nums 补注与 5.0 T-c 两件套注记）随组件退役整体删除——hero 首屏
+   .hero-chip 为用户拍板件不在退役面（词族区分）；motion.css 残留死规则
+   跨边界登记（§十六） */

@@ -1,0 +1,151 @@
+/* ============================================================
+   视觉 3.0 · T0.5 拆分（2026-10-04）
+   来源=base.css「批次A2 布局轨」节（原 L89-136）+「末轮集成+批次F」
+   rail 系（原 L530-533 段注释 + L540-583；该段 fb-/fu- 面在 message.css、
+   .sr-only 在 tokens.css）+「二期批次B/C」ren/input/search（原 L616-618
+   段注释 + L638-672；该段 import-bar 在 skeleton.css）。
+   纯搬运：零 token 改值、零 DOM 改动；文件内规则保持原 base.css 出现
+   顺序（.rail-head 二次增补在其本体之后）；触屏 hover:none 媒体块按
+   「媒体块整块不拆」纪律收编于 motion.css。
+   ------------------------------------------------------------
+   视觉 5.0 T-b（2026-10-04）：rail 现代化（ADR-0017 决策⑥）——
+   ①减分隔线：.rail-head 底线去除、.rail-item 左缘 2px 标示线退役
+   （rail 右缘发丝线=结构分界维持）；②active 态改浅灰底：亮 --g-100/
+   暗 --surface-2（去强调色 tint 依赖），active 标题改中性 --ink+600；
+   ③卡片投影 token 消费面：本件零命中（抽屉 --shadow-pop 浮层档维持）。
+   DOM/类名/文案/aria 零改动（纯材质面）；登记=T-b-DOM差异清单.md。
+   ============================================================ */
+/* ============ 批次A2 布局轨（2.0 §2.1/§2.2）：侧栏 chrome 层 + 内容列 ============
+   ≥1024px：264px 侧栏轨常驻（surface 底+右侧 1px 发丝线），header/main/footer
+   收进 .shell-body 纵列；内容列 720px 在"剩余空间"（100vw−轨宽）居中——
+   header/footer/main 的 padding 百分比基于自身宽度，收进纵列后自动达成。
+   侧栏属 chrome 层不侵入内容层，内容列网格与 1.0 逐像素相同。
+   <1024px：侧栏抽屉化（fixed 左滑出+遮罩），header 左端汉堡钮唤出。 */
+.shell { flex: 1; min-height: 0; display: flex; }
+.shell-body { flex: 1; min-width: 0; display: flex; flex-direction: column; min-height: 0; }
+.rail { display: none; /* 抽屉态默认隐藏；形态见下方两断点 */ }
+.rail-mask {
+  position: fixed; inset: 0; z-index: 40; background: rgb(0 0 0 / .4);
+  /* 显隐走 v-show（inline display）；≥1024px 常驻态无遮罩（下方兜底） */
+}
+.rail-head {
+  height: 56px; flex: none; display: flex; align-items: center;
+  padding-inline: 16px;
+  /* 视觉5.0 T-b（2026-10-04，ADR-0017 决策⑥）：rail 减分隔线——头底线去除
+     （侧栏内部装饰性分隔非必要）；rail 右缘发丝线=侧栏/内容结构分界，维持 */
+}
+.rail-title { font-size: var(--fs-13); font-weight: 600; color: var(--ink-2); }
+.rail-body { flex: 1; overflow-y: auto; padding: var(--sp-3);
+  scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+.rail-empty {
+  font-size: var(--fs-13); color: var(--ink-3); line-height: 1.7;
+  padding: 6px 4px; cursor: default; /* 禁用态占位：会话功能归下一轮接线 */
+}
+header .railbtn {
+  width: 28px; height: 28px; flex: none; margin-right: 2px;
+  border: none; background: none; color: var(--ink-2); border-radius: var(--r-1);
+  cursor: pointer; display: grid; place-items: center; padding: 0;
+}
+header .railbtn svg { width: 18px; height: 18px; }
+@media (min-width: 1024px) {
+  /* 常驻轨：与 header 顶线齐（rail-head 同 56px，横线视觉贯通） */
+  .rail {
+    display: flex; flex-direction: column; width: var(--rail-w); flex: none;
+    background: var(--surface); border-right: 1px solid var(--line);
+  }
+  header .railbtn { display: none; } /* 常驻态无需唤出钮 */
+  .rail-mask { display: none !important; } /* 兜底：桌面态拖窗后不残留遮罩 */
+}
+@media (max-width: 1023px) {
+  /* 抽屉态：汉堡钮唤出，遮罩点按即收（§2.2；无滑出动画=1.6 允许清单外禁） */
+  .rail.open {
+    display: flex; flex-direction: column;
+    position: fixed; left: 0; top: 0; bottom: 0; width: var(--rail-w); z-index: 41;
+    background: var(--surface); border-right: 1px solid var(--line);
+    box-shadow: var(--shadow-pop);
+  }
+}
+/* ============ 末轮集成+批次F（2026-10-03）：侧栏会话列表 rail-item/反馈钮 fb-/
+   追问条 fu-/视觉隐藏读屏区 .sr-only ============
+   全部新增面：既有类只做纯增属性（.rail-head 补 space-between 排布），1.0/2.0
+   token 原样引用明暗自适；动效走 1.6 允许清单（底/描边/前景色 ≤120ms）。 */
+/* 侧栏头部：标题+新会话钮两端排布（对 A2 壳 .rail-head 纯增排布属性） */
+.rail-head { justify-content: space-between; gap: 8px; }
+.rail-new {
+  border: 1px solid var(--tint-line); background: var(--accent-tint); color: var(--accent-tink);
+  font-size: var(--fs-12); font-family: inherit; border-radius: var(--r-1);
+  padding: 4px 10px; cursor: pointer; flex: none;
+}
+.rail-new:disabled { opacity: .45; cursor: default; }
+/* 加载中锁（切换会话拉取期间防抖：指针穿透关+降透明） */
+.rail-body.lock { pointer-events: none; opacity: .6; }
+/* 失败态可点击重试 */
+.rail-empty.rail-retry { cursor: pointer; }
+.rail-empty.rail-retry:hover { color: var(--ink-2); }
+/* 会话条目：标题单行省略+相对时间右置；删除钮 hover 显（触屏 hover:none 恒显
+   ——无 hover 可达性兜底）。
+   视觉5.0 T-b（2026-10-04，ADR-0017 决策⑥）：active 态改浅灰底（亮 --g-100/
+   暗 --surface-2），去强调色 tint 依赖；左缘 2px 标示线退役（减分隔线）——
+   border-left 透明占位随删、padding-left 10→12px 补位，行内文本对齐零漂移 */
+.rail-item {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 8px 8px 12px; border-radius: var(--r-1); cursor: pointer;
+}
+.rail-item.active { background: var(--g-100); }
+:root[data-theme="dark"] .rail-item.active { background: var(--surface-2); }
+.rail-item-main {
+  flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;
+}
+.rail-item-title {
+  font-size: var(--fs-13); color: var(--ink); line-height: 1.4;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.rail-item.active .rail-item-title { color: var(--ink); font-weight: 600; } /* 5.0 T-b：active 标题去强调色=中性 ink+字重升档（现代极简单一强调色纪律，靛蓝只落交互/品牌件） */
+.rail-item-time {
+  font-size: var(--fs-11); color: var(--ink-2); /* WCAG：ink-2 维持（5.0 active 浅灰底亮暗两套下对比充足；原「tint 底 4.26 不过线升档」注记随浅灰底改版退役，结论不变） */
+  font-variant-numeric: tabular-nums; line-height: 1.3;
+}
+.rail-item-del {
+  flex: none; width: 24px; height: 24px; border: none; background: none;
+  color: var(--ink-3); cursor: pointer; display: grid; place-items: center;
+  padding: 0; border-radius: var(--r-1); opacity: 0;
+}
+.rail-item-del svg { width: 14px; height: 14px; }
+.rail-item-del:disabled { cursor: default; }
+.rail-item:hover .rail-item-del, .rail-item-del:focus-visible { opacity: 1; }
+.rail-item:focus-within { outline: none; }
+/* ============ 二期批次B/C（2026-10-03）：导入询问条 import- / 重命名钮
+   .rail-item-ren / 行内编辑 .rail-item-input / 会话搜索 .rail-search ============
+   全部新增面（既有类零增改）；token 原样引用明暗自适，动效守 1.6 允许清单。 */
+/* 重命名钮（照 .rail-item-del 先例：hover 显、触屏恒显、convSwitching 锁） */
+.rail-item-ren {
+  flex: none; width: 24px; height: 24px; border: none; background: none;
+  color: var(--ink-3); cursor: pointer; display: grid; place-items: center;
+  padding: 0; border-radius: var(--r-1); opacity: 0;
+}
+.rail-item-ren svg { width: 14px; height: 14px; }
+.rail-item-ren:disabled { cursor: default; }
+.rail-item:hover .rail-item-ren, .rail-item-ren:focus-visible { opacity: 1; }
+/* 行内编辑输入框（title 原位替换 .rail-item-main；提交中禁用防重复编辑） */
+.rail-item-input {
+  flex: 1; min-width: 0; border: 1px solid var(--line-strong); border-radius: var(--r-1);
+  padding: 4px 8px; font-size: var(--fs-13); font-family: inherit; line-height: 1.4;
+  color: var(--ink); background: var(--surface-2); outline: none;
+}
+.rail-item-input:focus {
+  border-color: var(--focus);
+  box-shadow: var(--focus-ring); /* 3.0 §1.5 裁决 #33：复合值收编（值同现双环，行为零变化） */
+}
+.rail-item-input:disabled { opacity: .6; }
+/* 会话搜索框（rail-head 与 rail-body 之间，仅 ready 态渲染；纯本地过滤零请求） */
+.rail-search-row { flex: none; padding: 10px 12px 2px; }
+.rail-search {
+  width: 100%; border: 1px solid var(--line-strong); border-radius: var(--r-2);
+  padding: 7px 10px; font-size: var(--fs-13); font-family: inherit; line-height: 1.4;
+  color: var(--ink); background: var(--surface-2); outline: none;
+}
+.rail-search::placeholder { color: var(--ink-3); opacity: 1; }
+.rail-search:focus {
+  border-color: var(--focus);
+  box-shadow: var(--focus-ring); /* 3.0 §1.5 裁决 #33：复合值收编（值同现双环，行为零变化） */
+}

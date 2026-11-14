@@ -1,0 +1,364 @@
+<!--
+  qa-bot 前端批次0（代理D，2026-10-03）：单条 assistant 消息。
+  行为真源：static/index.html 的 render()/srcsHtml()（411-453、556-582 行）。
+  DOM 结构/类名/文案为 Playwright 回归断言面：逐字节对齐，禁止增改；
+  模板不留 HTML 注释（DOM 快照保真）。verdict/overall 枚举白名单外一律不渲染。
+  批B（2026-10-03）：+消息操作条 act-*（复制/重新生成/完成时刻/用量徽标）与
+  出处 chip 预览卡 pv-*（hover/tap 双模态，quote/score 纯文本插值零注入面）。
+  批次A2（2026-10-03 视觉 2.0）：evInsufficient 提示条加 .ev 修饰类（警示态，
+  3.3）；出处 chip 编号化 "[N] " 前缀（3.4）；预览卡重排为 头部标识行/quote/
+  底行 score+verdict 三段（pv-head/pv-quote/pv-foot/pv-score，原 pv-meta 拆分）；
+  桌面 hover ≥300ms 延迟显现；卡出界横钳制/竖翻转（show 后 nextTick 量测）。
+  既有断言面类名/文案零改动（.ev 与 [N] 为新增修饰面，无既有选择器命中）。
+  末轮集成（2026-10-03）：act-bar 尾部反馈钮 fb-*（👍/👎，traceId transient
+  才渲染）+追问条 fu-*（msg.followups 渲染前再校验，点击回抛 fill 填入不发送）。
+  既有断言面类名/文案零改动（fb-/fu- 为新增前缀面）。
+-->
+<script setup lang="ts">
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { state, streamCls } from '../store';
+import { mdToHtml } from '../lib/markdown';
+import { SRC_MAXSHOW, CC_VERDICT, CC_LABEL, INSUFF_HEAD, INSUFF_FALLBACK, OFFTOPIC_TEXT } from '../lib/constants';
+import type { Msg } from '../types';
+
+const props = defineProps<{ msg: Msg; botLabel: string; live?: boolean; last?: boolean }>();
+/* 批B：重新生成回抛 App（send/msgs 归 useChat+App 编排，组件内不直接改流）；
+   末轮集成：askcode=反馈 401 时弹口令栏（复用 App 的 askCode）；fill=追问 chip
+   点击回抛填入输入框（不自动发送，同空状态 chip 先例）。 */
+const emit = defineEmits<{ (e: 'regen'): void; (e: 'askcode'): void; (e: 'fill', text: string): void }>();
+
+/* 历史数据（localStorage 恢复）形状不保证，统一走 any 视图做运行时防御（照搬旧版判断式） */
+const m = computed(() => props.msg as unknown as Record<string, any>);
+
+const isErr = computed(() => !!m.value.error);
+const errText = computed(() => String(m.value.content ?? ''));
+const showOffTopic = computed(() => !!m.value.offTopic && !isErr.value);
+const showEvIns = computed(() => !!m.value.evInsufficient && !isErr.value);
+const evText = computed(() => INSUFF_HEAD + (m.value.evReason || INSUFF_FALLBACK));
+/* 仅非错误消息走 markdown；错误消息保持纯文本折行（.msg.bot.err .txt 不经 mdToHtml） */
+const bodyHtml = computed(() => mdToHtml(String(m.value.content ?? '')));
+
+/* 流式 .txt 类（waiting/waitlong/typing）：仅 live（流式中的最后一条）时取 streamCls */
+const liveCls = computed<Record<string, boolean> | undefined>(() => {
+  if (!props.live) return undefined;
+  return { waiting: streamCls.waiting, waitlong: streamCls.waitlong, typing: streamCls.typing };
+});
+
+/* ============ 批B：消息操作条 act-*（流式结束后显示；live 期间整条隐藏） ============ */
+const showAct = computed(() => !props.live);
+/* 重新生成：仅末条 assistant 且无流式时可用（组件侧 disabled + App 侧双保险） */
+const canRegen = computed(() => !state.streaming && !!props.last);
+
+/* 复制整条：复用既有 copyText 模式（clipboard API 优先+execCommand 兜底，
+   反馈"已复制/复制"1200ms）；内容=msg.content 原串纯文本，不经 markdown 拍平 */
+const copied = ref(false);
+let copyTimer: ReturnType<typeof setTimeout> | null = null;
+function onCopy(): void {
+  const t = String(m.value.content ?? '');
+  const done = function () {
+    copied.value = true;
+    if (copyTimer) clearTimeout(copyTimer);
+    copyTimer = setTimeout(function () { copied.value = false; }, 1200);
+  };
+  const fallback = function () { // 非安全上下文（如局域网 http）无 clipboard API 时的兜底
+    const ta = document.createElement('textarea');
+    ta.value = t;
+    ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch {}
+    document.body.removeChild(ta);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(t).then(done, fallback);
+  } else fallback();
+}
+
+/* 完成时刻：HH:MM 文本+title 完整日期。ts 为 transient（不入库）：历史恢复消息
+   无 ts 时不渲染时间项（whitelist 只新增了 usage，ts 不入库是拍板口径） */
+function p2(n: number): string { return (n < 10 ? '0' : '') + n; }
+const timeText = computed(() => {
+  const ts = m.value.ts;
+  if (typeof ts !== 'number' || !isFinite(ts)) return '';
+  const d = new Date(ts);
+  return p2(d.getHours()) + ':' + p2(d.getMinutes());
+});
+const timeTitle = computed(() => {
+  const ts = m.value.ts;
+  if (typeof ts !== 'number' || !isFinite(ts)) return '';
+  const d = new Date(ts);
+  return d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate())
+    + ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes());
+});
+
+/* token 用量徽标：usage（done 事件 total_tokens）<1000 显原值、否则 (n/1000)
+   保留 1 位 +'k'（1334 → '1.3k tok'）；非有限数值不渲染 */
+const usageText = computed(() => {
+  const u = m.value.usage;
+  if (typeof u !== 'number' || !isFinite(u) || u < 0) return '';
+  return (u < 1000 ? String(u) : (u / 1000).toFixed(1) + 'k') + ' tok';
+});
+
+function onRegen(): void {
+  if (!canRegen.value) return;
+  emit('regen');
+}
+
+/* ============ 末轮集成：反馈钮 fb-*（act-bar 尾部 👍/👎） ============
+   traceId=该轮 X-QA-Trace-Id（transient 不入 localStorage）——刷新后旧消息
+   无 traceId=无反馈钮（防跨会话复用旧 trace）。成功后两钮禁用+文案"已记录"
+   1.5s；401 回抛 askcode 弹口令栏（登录后可重试）；网络失败静默降级文案
+   （copyText 式瞬时文字，不弹窗）；429 沿用限速风格文案。 */
+const canFeedback = computed(() => !isErr.value && typeof m.value.traceId === 'string' && !!m.value.traceId);
+const fbBusy = ref(false);
+const fbDone = ref(false);
+const fbText = ref('');
+let fbTimer: ReturnType<typeof setTimeout> | null = null;
+function fbSay(t: string): void {
+  fbText.value = t;
+  if (fbTimer) clearTimeout(fbTimer);
+  fbTimer = setTimeout(function () { fbText.value = ''; }, 1500);
+}
+function onFeedback(rating: 'up' | 'down'): void {
+  if (fbBusy.value || fbDone.value || !canFeedback.value) return;
+  fbBusy.value = true;
+  const body: Record<string, unknown> = { rating };
+  const tid = String(m.value.traceId || '');
+  if (tid) body.trace_id = tid;
+  const pc = String(state.code || '').trim();
+  if (pc) body.passcode = pc; // 双轨同 /api/chat：暂存口令直送上送，避免未登录态 401
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (state.currentConvId !== null && isFinite(state.currentConvId)) {
+    headers['X-QA-Conv-Id'] = String(state.currentConvId); // 运营关联线索（服务端只记不校验）
+  }
+  fetch('/api/feedback', { method: 'POST', headers, body: JSON.stringify(body) })
+    .then(function (r) {
+      return r.json().then(function (j: any) { return { ok: r.ok, status: r.status, j }; })
+        .catch(function () { return { ok: r.ok, status: r.status, j: {} as any }; });
+    })
+    .then(function (res) {
+      if (res.ok && res.j && res.j.ok) {
+        fbDone.value = true;
+        fbSay('已记录');
+      } else if (res.status === 401) {
+        emit('askcode'); // 弹口令栏复用 askCode；登录后用户可重试（按钮回可用）
+      } else if (res.status === 429) {
+        fbSay('操作太频繁啦，请稍等一分钟再试。');
+      } else {
+        fbSay('反馈失败');
+      }
+    })
+    .catch(function () { fbSay('反馈失败'); }) // 网络失败：静默瞬时文案（不弹窗不打日志）
+    .then(function () { fbBusy.value = false; });
+}
+
+/* ============ 末轮集成：追问条 fu-*（act-bar 下方） ============
+   msg.followups=E2 事件 items（优先）或规则法兜底产物（useChat 侧生成）；
+   渲染前再校验一遍（localStorage 旧档/坏档防御：非 string/超 200 字/条数
+   0 或 >3 整体不渲染）。点击=填入输入框不自动发送（App 侧 onFuFill）。 */
+const fuItems = computed<string[]>(function () {
+  const v = m.value.followups;
+  if (!Array.isArray(v) || v.length < 1 || v.length > 3) return [];
+  const out: string[] = [];
+  for (let i = 0; i < v.length; i++) {
+    if (typeof v[i] !== 'string' || !v[i] || v[i].length > 200) return [];
+    out.push(v[i]);
+  }
+  return out;
+});
+
+interface SrcItem { text: string; vCls: string; vLabel: string }
+interface SrcsModel {
+  items: SrcItem[];
+  more: number;
+  overallCls: string;   // 'l-{overall}'，白名单外为 ''（不渲染）
+  overallLabel: string; // CC_LABEL 文案，白名单外为 ''
+  gate: { ok: boolean; hard: number } | null; // cgate.ok 为 boolean 才渲染
+}
+
+/* 出处条渲染模型：与 srcsHtml() 完全等价——逐源徽标按 doc_id 顺序消耗配对
+   （同 doc_id 多源先配先得，per_source 孤儿项不渲染）；.srcs(.closed)>.srcs-t
+   +可选总标/程序闸 chip+span.srcs-list>span.srcs-it（内嵌 v-{verdict} 徽标）
+   +more>0 时 button.srcs-x（data-more=more，'+'+more/'收起'，折叠态不持久化） */
+const srcsModel = computed<SrcsModel | null>(() => {
+  const mm = m.value;
+  if (mm.role !== 'assistant' || !Array.isArray(mm.sources) || !mm.sources.length) return null;
+  const ccList: any[] = (mm.cc && Array.isArray(mm.cc.per_source)) ? mm.cc.per_source.slice() : [];
+  const verdictFor = (docId: unknown): string | null => {
+    for (let i = 0; i < ccList.length; i++) {
+      const e = ccList[i];
+      if (e && typeof e === 'object' && e.doc_id === docId && CC_VERDICT[e.verdict]) {
+        ccList.splice(i, 1);
+        return e.verdict; // 已白名单校验：可安全拼进 class 名
+      }
+    }
+    return null;
+  };
+  const items: SrcItem[] = [];
+  (mm.sources as any[]).forEach((s: any) => {
+    if (s && typeof s === 'object') {
+      const t = [s.doc_id, s.version, s.locator].filter(function (x) { return x; }).join(' ');
+      if (t) {
+        const v = verdictFor(s.doc_id);
+        items.push({ text: t, vCls: v ? 'v-' + v : '', vLabel: v ? CC_VERDICT[v] : '' });
+      }
+    }
+  });
+  if (!items.length) return null;
+  const oc = (mm.cc && CC_LABEL[mm.cc.overall]) ? mm.cc.overall : '';
+  return {
+    items,
+    more: items.length - SRC_MAXSHOW,
+    overallCls: oc ? 'l-' + oc : '',
+    overallLabel: oc ? CC_LABEL[oc] : '',
+    gate: (mm.cgate && typeof mm.cgate.ok === 'boolean')
+      ? { ok: mm.cgate.ok, hard: mm.cgate.hard }
+      : null,
+  };
+});
+
+/* ============ 批B：出处 chip 预览卡 pv-*（批次A2 按 2.0 §3.4 重排/重刷） ============
+   桌面（hover:hover）mouseenter ≥300ms 延迟显现、mouseleave 即收；触屏
+   （hover:none）tap 切换——同消息同时只开一张（单下标状态），点卡片自身/
+   消息外/Esc 关闭。quote/score/doc_id 全部服务端内容：一律 {{ }} 文本插值
+   （Vue 转义），quote 前端再截 200 字保险。 */
+const canHover: boolean = (function () {
+  try { return typeof window.matchMedia === 'function' && window.matchMedia('(hover: hover)').matches; }
+  catch { return false; }
+})();
+const pvHover = ref(-1);
+const pvTap = ref(-1);
+const rootEl = ref<HTMLElement | null>(null);
+let pvHoverTimer: ReturnType<typeof setTimeout> | null = null;
+function pvShow(i: number): boolean { return pvHover.value === i || pvTap.value === i; }
+function onChipEnter(i: number): void {
+  if (!canHover) return;
+  if (pvHoverTimer) clearTimeout(pvHoverTimer);
+  pvHoverTimer = setTimeout(function () { pvHover.value = i; }, 300); // 2.0：hover ≥300ms 延迟显现（防扫过误开）
+}
+function onChipLeave(): void {
+  if (pvHoverTimer) { clearTimeout(pvHoverTimer); pvHoverTimer = null; }
+  pvHover.value = -1;
+}
+function onChipTap(e: MouseEvent, i: number): void {
+  if (canHover) return; // 桌面模态归 hover 管，click 不掺和
+  const t = e.target as HTMLElement | null;
+  if (t && t.closest && t.closest('.pv-card')) return; // 点卡片自身（滚动/选词）不收起
+  pvTap.value = (pvTap.value === i) ? -1 : i;
+}
+function onDocClick(e: MouseEvent): void { // 点消息外任意处关闭（触屏态）
+  const r = rootEl.value;
+  const t = e.target as Node | null;
+  if (!r || !t || !r.contains(t)) pvTap.value = -1;
+}
+function onDocKey(e: KeyboardEvent): void { // Esc 收卡（2.0 §3.4 交互）
+  if (e.key === 'Escape') { pvTap.value = -1; pvHover.value = -1; }
+}
+function pvQuote(i: number): string {
+  const arr = m.value.sources;
+  const s = Array.isArray(arr) ? arr[i] : null;
+  const q = (s && typeof s === 'object' && typeof s.quote === 'string') ? s.quote.slice(0, 200) : '';
+  return q || '（无摘录）';
+}
+function pvId(i: number): string { // 头部标识行：doc_id+version+locator（mono）
+  const arr = m.value.sources;
+  const s = Array.isArray(arr) ? (arr[i] as any) : null;
+  if (!s || typeof s !== 'object') return '';
+  return [s.doc_id, s.version, s.locator].filter(function (x) { return x; }).join(' ');
+}
+function pvScore(i: number): string { // 底行 score 药丸；非有限数值不渲染
+  const arr = m.value.sources;
+  const s = Array.isArray(arr) ? (arr[i] as any) : null;
+  if (!s || typeof s !== 'object') return '';
+  return (typeof s.score === 'number' && isFinite(s.score)) ? 'score ' + String(s.score) : ''; // toFixed 不安全：直接 String
+}
+
+/* 2.0 §3.4：卡出界防护——show 后量测，横向钳制在视口内（8px 边距）、
+   纵向下出界翻到 chip 上方；流式重排后下次 show 重算（inline 样式先复位） */
+function pvClamp(): void {
+  const root = rootEl.value;
+  if (!root) return;
+  const card = root.querySelector('.pv-card');
+  if (!card) return;
+  const c = card as HTMLElement;
+  c.style.left = '';
+  c.style.top = '';
+  c.style.bottom = '';
+  const cr = c.getBoundingClientRect();
+  const vw = window.innerWidth || document.documentElement.clientWidth;
+  const vh = window.innerHeight || document.documentElement.clientHeight;
+  const overR = cr.right - (vw - 8);
+  if (overR > 0) {
+    const dx = Math.min(overR, cr.left - 8); // 右溢出左移，但不越出左缘
+    if (dx > 0) c.style.left = -dx + 'px';
+  }
+  if (cr.bottom > vh - 8) { // 下出界翻上方（top: calc(100%+6px) ↔ bottom: calc(100%+6px)）
+    c.style.top = 'auto';
+    c.style.bottom = 'calc(100% + 6px)';
+  }
+}
+watch([pvHover, pvTap], function () {
+  if (pvHover.value < 0 && pvTap.value < 0) return;
+  nextTick(pvClamp);
+});
+
+/* +N 展开/收起（transient：不持久化、不入存储；重挂载即回折叠） */
+const open = ref(false);
+
+/* 重新生成按 v-for key 复用组件实例（splice+push 同位）：换 msg 对象时清
+   批B 瞬态态（复制反馈/点开卡/hover 延迟计时器），防旧消息交互状态漏染新答
+   （展开态按批0 契约微差③保留）；末轮集成同步清反馈瞬态（fbText/计时器，
+   fbDone 成功态一并复位——新轮新 trace） */
+watch(function () { return props.msg; }, function () {
+  pvTap.value = -1;
+  pvHover.value = -1;
+  if (pvHoverTimer) { clearTimeout(pvHoverTimer); pvHoverTimer = null; }
+  copied.value = false;
+  if (copyTimer) { clearTimeout(copyTimer); copyTimer = null; }
+  fbText.value = '';
+  fbDone.value = false;
+  fbBusy.value = false;
+  if (fbTimer) { clearTimeout(fbTimer); fbTimer = null; }
+});
+
+onMounted(function () {
+  document.addEventListener('click', onDocClick);
+  document.addEventListener('keydown', onDocKey);
+});
+onBeforeUnmount(function () {
+  document.removeEventListener('click', onDocClick);
+  document.removeEventListener('keydown', onDocKey);
+  if (pvHoverTimer) { clearTimeout(pvHoverTimer); pvHoverTimer = null; }
+  if (copyTimer) { clearTimeout(copyTimer); copyTimer = null; }
+  if (fbTimer) { clearTimeout(fbTimer); fbTimer = null; }
+});
+</script>
+
+<template>
+  <div class="msg bot" :class="{ err: isErr }" ref="rootEl">
+    <div v-if="!isErr" class="role">{{ botLabel }}</div>
+    <div v-if="showOffTopic" class="offtopic">{{ OFFTOPIC_TEXT }}</div>
+    <div v-if="showEvIns" class="offtopic ev">{{ evText }}</div>
+    <div v-if="isErr" class="txt" :class="liveCls">{{ errText }}</div>
+    <div v-else class="txt" :class="liveCls" v-html="bodyHtml"></div>
+    <div v-if="srcsModel" class="srcs" :class="{ closed: srcsModel.more > 0 && !open }">
+      <span class="srcs-t">出处：</span>
+      <span v-if="srcsModel.overallCls" class="srcs-cc-all" :class="srcsModel.overallCls">{{ srcsModel.overallLabel }}</span>
+      <span v-if="srcsModel.gate" class="srcs-gate" :class="srcsModel.gate.ok ? 'g-ok' : 'g-bad'">{{ srcsModel.gate.ok ? '引用核验✓' : '引用核验：' + srcsModel.gate.hard + ' 处不符' }}</span>
+      <span class="srcs-list"><span v-for="(it, i) in srcsModel.items" :key="i" class="srcs-it" @mouseenter="onChipEnter(i)" @mouseleave="onChipLeave" @click="onChipTap($event, i)">[{{ i + 1 }}] {{ it.text }}<span v-if="it.vCls" class="srcs-cc" :class="it.vCls">{{ it.vLabel }}</span><span v-if="pvShow(i)" class="pv-card" role="dialog" aria-label="出处预览"><span class="pv-head">{{ pvId(i) }}</span><span class="pv-quote">{{ pvQuote(i) }}</span><span class="pv-foot"><span v-if="pvScore(i)" class="pv-score">{{ pvScore(i) }}</span><span v-if="it.vLabel">{{ it.vLabel }}</span></span></span></span></span>
+      <button v-if="srcsModel.more > 0" class="srcs-x" type="button" :data-more="srcsModel.more" @click="open = !open">{{ open ? '收起' : '+' + srcsModel.more }}</button>
+    </div>
+    <div v-if="showAct" class="act-bar">
+      <button class="act-btn act-copy" type="button" @click="onCopy">{{ copied ? '已复制' : '复制' }}</button>
+      <button class="act-btn act-regen" type="button" :disabled="!canRegen" @click="onRegen">重新生成</button>
+      <button v-if="canFeedback" class="act-btn fb-btn fb-up" type="button" aria-label="赞同" :disabled="fbBusy || fbDone" @click="onFeedback('up')">👍</button>
+      <button v-if="canFeedback" class="act-btn fb-btn fb-down" type="button" aria-label="不满意" :disabled="fbBusy || fbDone" @click="onFeedback('down')">👎</button>
+      <span v-if="fbText" class="fb-done" role="status">{{ fbText }}</span>
+      <span v-if="timeText" class="act-time" :title="timeTitle">{{ timeText }}</span>
+      <span v-if="usageText" class="act-tok">{{ usageText }}</span>
+    </div>
+    <div v-if="showAct && fuItems.length" class="fu-bar">
+      <button v-for="(t, i) in fuItems" :key="i" class="fu-chip" type="button" @click="emit('fill', t)">{{ t }}</button>
+    </div>
+  </div>
+</template>

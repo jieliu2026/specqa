@@ -1,0 +1,20 @@
+/* ============ 视觉 3.0 T1（2026-10-04）：display 衬线层自托管字体 ============
+   真源=运营/视觉3.0-20261004/基调稿与组件语言-3.0.md §1.3（冻结口径）；
+   拍板链=断点三节31（2026-10-04 设计闸四项拍板）。
+   资产=思源宋体 SC SemiBold（600）子集 woff2：259 码位（204 汉字全字盘+
+   标点/拉丁/数字），67.2KB；家族名 QABot Serif Display（OFL RFN 合规改名，
+   版权字段原样保留，许可文本=assets/fonts/OFL.txt 同载）。
+   字盘单源纪律：消费字串真源=src/lib/display-strings.ts；构建期
+   displayFontGuard（vite.config.ts）校验常量表全字符命中子集 cmap，
+   缺字即构建失败（防两副字形混排）。字盘变更须先改常量表、再用
+   运营/视觉3.0-20261004/fonts-候选/再生-子集.py 幂等重生成。
+   衬线白名单穷举制（W1 空状态主标题/W2 引号字形/W3 预留，≥20px，
+   动态文本一律禁）见 tokens.css --font-display 注释——清单外任何面禁用。
+   运行时零外部请求（零 CDN 守宪铁律）；亮暗同栈零覆写。 */
+@font-face {
+  font-family: "QABot Serif Display";
+  src: url("../assets/fonts/display-serif-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}

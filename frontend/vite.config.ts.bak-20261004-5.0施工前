@@ -1,0 +1,90 @@
+import vue from '@vitejs/plugin-vue'
+import { spawnSync } from 'node:child_process'
+import { existsSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+import { defineConfig, type Plugin } from 'vite'
+import { DISPLAY_CHARSET } from './src/lib/display-strings.js' // node16 解析口径：.js 后缀指 .ts 源
+
+/* ============ 批次A2（2026-10-03 视觉 2.0）：KaTeX 字体裁剪 ============
+   katex.min.css 每个 @font-face 带 woff2/woff/ttf 三源，vite 默认三类全收进
+   dist（~59 件 ≈1MB 死重复）。现代浏览器（Chrome/Edge/Safari/Firefox 近年
+   版本）全支持 woff2，构建期把 woff/ttf 的 url() 段剥除，只留 woff2 源——
+   自写 transform 钩子，零新依赖。 */
+function katexWoff2Only(): Plugin {
+  return {
+    name: 'katex-woff2-only',
+    enforce: 'pre', // 必须先于 vite 内建 css 管线（url() 被替换为 __VITE_ASSET__ 占位符前）
+    transform(code, id) {
+      if (!/katex[^/]*\.css$/.test(id)) return null
+      const stripped = code
+        .replace(/,\s*url\([^)]*\.woff\)\s*format\("woff"\)/g, '')
+        .replace(/,\s*url\([^)]*\.ttf\)\s*format\("(?:truetype|opentype)"\)/g, '')
+      return stripped === code ? null : { code: stripped, map: null }
+    },
+  }
+}
+
+// https://vite.dev/config/
+/* ============ 视觉 3.0 T1（2026-10-04）：display 字盘子集守护 ============
+   校验口径（基调稿 §1.3 字盘单源纪律，拍板链=断点三节31）：
+   src/lib/display-strings.ts 常量表（文案真源）全字符必须命中
+   src/assets/fonts/display-serif-600.woff2 的 cmap，缺字即构建失败
+   （fail-fast，防「文案新增字不在子集→两副字形混排」，B-⑤2）。
+   cmap 解析走仓 venv fontTools（venv 相对 vite.config.ts 定位=
+   ../../venv；构建只发生在本机，云端零 Node，见基调稿 §五 T1 行）。
+   buildStart 钩子：vite build 与 vite dev 启动各跑一次。 */
+function displayFontGuard(): Plugin {
+  const here = (p: string) => fileURLToPath(new URL(p, import.meta.url))
+  // fontTools 解析 woff2（brotli 解压+cmap 子表并集），stdin 收 JSON 字串表
+  const PY_CHECK = [
+    'import json, sys',
+    'from fontTools.ttLib import TTFont',
+    'font = TTFont(sys.argv[1])',
+    'need = {}',
+    'for t in json.load(sys.stdin):',
+    '    for ch in t:',
+    '        need.setdefault(ord(ch), ch)',
+    'cmap = set()',
+    'for t in font["cmap"].tables:',
+    '    cmap |= set(t.cmap)',
+    'missing = [cp for cp in need if cp not in cmap]',
+    'if missing:',
+    '    print("MISSING " + ",".join(f"U+{cp:04X}({need[cp]})" for cp in missing))',
+    '    sys.exit(1)',
+    'print(f"OK {len(need)} chars, cmap {len(cmap)}")',
+  ].join('\n')
+  return {
+    name: 'display-font-guard',
+    buildStart() {
+      const font = here('./src/assets/fonts/display-serif-600.woff2')
+      const py = here('../venv/bin/python')
+      if (!existsSync(font)) {
+        this.error(`[display-font-guard] 缺 display 衬线子集 ${font}——先跑 fonts-候选/再生-子集.py 并按基调稿 §1.3 就位资产`)
+      }
+      if (!existsSync(py)) {
+        this.error(`[display-font-guard] 缺仓 venv Python ${py}——cmap 解析依赖 fontTools（构建只发生在本机）`)
+      }
+      const res = spawnSync(py, ['-c', PY_CHECK, font], {
+        input: JSON.stringify(DISPLAY_CHARSET),
+        encoding: 'utf8',
+      })
+      if (res.status !== 0) {
+        this.error(
+          `[display-font-guard] display 字盘常量表字符未全命中子集 cmap（文案新增字不在子集=两副字形混排风险）：\n` +
+            `${(res.stdout || '').trim()}\n${(res.stderr || '').trim()}\n` +
+            `→ 更新 src/lib/display-strings.ts 后须用 fonts-候选/再生-子集.py 重生成子集（字盘单源纪律）`,
+        )
+      }
+      console.log(`[display-font-guard] ${(res.stdout || '').trim()}`)
+    },
+  }
+}
+
+export default defineConfig({
+  base: '/',
+  plugins: [vue(), katexWoff2Only(), displayFontGuard()],
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+  },
+})

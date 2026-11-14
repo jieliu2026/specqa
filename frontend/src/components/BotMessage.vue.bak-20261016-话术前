@@ -1,0 +1,317 @@
+<!--
+  qa-bot 前端批次0（代理D，2026-10-03）：单条 assistant 消息。
+  行为真源：static/index.html 的 render()/srcsHtml()（411-453、556-582 行）。
+  DOM 结构/类名/文案为 Playwright 回归断言面：逐字节对齐，禁止增改；
+  模板不留 HTML 注释（DOM 快照保真）。verdict/overall 枚举白名单外一律不渲染。
+  批B（2026-10-03）：+消息操作条 act-*（复制/重新生成/完成时刻/用量徽标）与
+  出处 chip 预览卡 pv-*（hover/tap 双模态，quote/score 纯文本插值零注入面）。
+  批次A2（2026-10-03 视觉 2.0）：evInsufficient 提示条加 .ev 修饰类（警示态，
+  3.3）；出处 chip 编号化 "[N] " 前缀（3.4）；预览卡重排为 头部标识行/quote/
+  底行 score+verdict 三段（pv-head/pv-quote/pv-foot/pv-score，原 pv-meta 拆分）；
+  桌面 hover ≥300ms 延迟显现；卡出界横钳制/竖翻转（show 后 nextTick 量测）。
+  既有断言面类名/文案零改动（.ev 与 [N] 为新增修饰面，无既有选择器命中）。
+  末轮集成（2026-10-03）：act-bar 尾部反馈钮＋追问条两组件（均已随 5.0
+  反馈批4 退役——类名/文案穷举清单=运营/视觉5.0-现代极简-20261004/
+  T-b-DOM差异清单.md §十六，本注刻意不复述守 grep 清零口径）。
+  5.0 反馈批4（2026-10-04）：用户指令「回答完后出的追问引导框框不要；
+  点赞/踩按钮也不要」——act-bar 尾部点赞/踩钮与反馈瞬时报文、追问引导条
+  的 DOM 与逻辑整体删除（/api/feedback 前端调用同删，服务端接口保留在役
+  零涉动）；act-bar 保留四件=复制/重新生成/完成时刻/用量徽标零改；
+  pv-card/srcs 零改；hero 首屏 .hero-chip（App.vue 面）为用户拍板件保留
+  零动（词族注意区分）。emits 收敛为 regen 单项（fill/askcode 随组件退役
+  ——askcode 原仅反馈 401 消费；App.vue 同名绑定与 onFuFill 同批退役）。
+  SSE 解析侧 followups/traceId 字段保留 parse 入库不渲染（useChat.ts/
+  store.ts 白名单零改动，旧档恢复双向兼容维持；退役=仅渲染层，可回退）。
+  意图缺口批甲（2026-10-09）：新增 .offtopic.gap 通识标注行一条（服务端
+  insight_gap 事件 note，{{ }} 插值转义）——经批的契约面新增（设计稿 v3-甲），
+  既有断言面类名/文案零改动（.gap 为新修饰类，无既有选择器命中）。
+  G 徽标（备发包-20261012，随服务端 source_tier_enabled 开关，默认关）：出处 chip
+  尾增 source_tier 小徽标（L1/L2/L3 白名单外不渲染；旧档恢复无字段=无徽标，双向
+  兼容；.srcs-tier/t-l1|t-l2|t-l3 均新增面，无既有选择器命中）。
+-->
+<script setup lang="ts">
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { state, streamCls } from '../store';
+import { mdToHtml } from '../lib/markdown';
+import { SRC_MAXSHOW, CC_VERDICT, CC_LABEL, INSUFF_HEAD, INSUFF_FALLBACK, OFFTOPIC_TEXT } from '../lib/constants';
+import type { Msg } from '../types';
+
+const props = defineProps<{ msg: Msg; botLabel: string; live?: boolean; last?: boolean }>();
+/* 批B：重新生成回抛 App（send/msgs 归 useChat+App 编排，组件内不直接改流）。
+   5.0 反馈批4：askcode/fill 两回抛随点赞踩与追问组件退役，emits 收敛单项。 */
+const emit = defineEmits<{ (e: 'regen'): void }>();
+
+/* 历史数据（localStorage 恢复）形状不保证，统一走 any 视图做运行时防御（照搬旧版判断式） */
+const m = computed(() => props.msg as unknown as Record<string, any>);
+
+const isErr = computed(() => !!m.value.error);
+const errText = computed(() => String(m.value.content ?? ''));
+const showOffTopic = computed(() => !!m.value.offTopic && !isErr.value);
+const showEvIns = computed(() => !!m.value.evInsufficient && !isErr.value);
+const evText = computed(() => INSUFF_HEAD + (m.value.evReason || INSUFF_FALLBACK));
+/* 意图缺口批甲：通识标注行（note 全文自服务端，无前端拼装/兜底——空串不渲染） */
+const showGap = computed(() => !!m.value.insightGap && !isErr.value);
+const gapText = computed(() => String(m.value.insightGap ?? ''));
+/* 仅非错误消息走 markdown；错误消息保持纯文本折行（.msg.bot.err .txt 不经 mdToHtml） */
+const bodyHtml = computed(() => mdToHtml(String(m.value.content ?? '')));
+
+/* 流式 .txt 类（waiting/waitlong/typing）：仅 live（流式中的最后一条）时取 streamCls */
+const liveCls = computed<Record<string, boolean> | undefined>(() => {
+  if (!props.live) return undefined;
+  return { waiting: streamCls.waiting, waitlong: streamCls.waitlong, typing: streamCls.typing };
+});
+
+/* ============ 批B：消息操作条 act-*（流式结束后显示；live 期间整条隐藏） ============ */
+const showAct = computed(() => !props.live);
+/* 重新生成：仅末条 assistant 且无流式时可用（组件侧 disabled + App 侧双保险） */
+const canRegen = computed(() => !state.streaming && !!props.last);
+
+/* 复制整条：复用既有 copyText 模式（clipboard API 优先+execCommand 兜底，
+   反馈"已复制/复制"1200ms）；内容=msg.content 原串纯文本，不经 markdown 拍平 */
+const copied = ref(false);
+let copyTimer: ReturnType<typeof setTimeout> | null = null;
+function onCopy(): void {
+  const t = String(m.value.content ?? '');
+  const done = function () {
+    copied.value = true;
+    if (copyTimer) clearTimeout(copyTimer);
+    copyTimer = setTimeout(function () { copied.value = false; }, 1200);
+  };
+  const fallback = function () { // 非安全上下文（如局域网 http）无 clipboard API 时的兜底
+    const ta = document.createElement('textarea');
+    ta.value = t;
+    ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); done(); } catch {}
+    document.body.removeChild(ta);
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(t).then(done, fallback);
+  } else fallback();
+}
+
+/* 完成时刻：HH:MM 文本+title 完整日期。ts 为 transient（不入库）：历史恢复消息
+   无 ts 时不渲染时间项（whitelist 只新增了 usage，ts 不入库是拍板口径） */
+function p2(n: number): string { return (n < 10 ? '0' : '') + n; }
+const timeText = computed(() => {
+  const ts = m.value.ts;
+  if (typeof ts !== 'number' || !isFinite(ts)) return '';
+  const d = new Date(ts);
+  return p2(d.getHours()) + ':' + p2(d.getMinutes());
+});
+const timeTitle = computed(() => {
+  const ts = m.value.ts;
+  if (typeof ts !== 'number' || !isFinite(ts)) return '';
+  const d = new Date(ts);
+  return d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate())
+    + ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes());
+});
+
+/* token 用量徽标：usage（done 事件 total_tokens）<1000 显原值、否则 (n/1000)
+   保留 1 位 +'k'（1334 → '1.3k tok'）；非有限数值不渲染 */
+const usageText = computed(() => {
+  const u = m.value.usage;
+  if (typeof u !== 'number' || !isFinite(u) || u < 0) return '';
+  return (u < 1000 ? String(u) : (u / 1000).toFixed(1) + 'k') + ' tok';
+});
+
+function onRegen(): void {
+  if (!canRegen.value) return;
+  emit('regen');
+}
+
+/* 5.0 反馈批4（2026-10-04）：反馈钮（点赞/踩，/api/feedback 调用+traceId
+   消费+askcode 401 回抛+瞬时报文）与追问条（followups 渲染前校验+fill
+   回抛）两段逻辑整体删除——用户指令退役，穷举登记=差异清单 §十六。
+   followups/traceId 字段仍由 useChat parse 入库（transient 纪律不变），
+   本组件不再消费渲染。 */
+
+interface SrcItem { text: string; vCls: string; vLabel: string; tier: string }
+interface SrcsModel {
+  items: SrcItem[];
+  more: number;
+  overallCls: string;   // 'l-{overall}'，白名单外为 ''（不渲染）
+  overallLabel: string; // CC_LABEL 文案，白名单外为 ''
+  gate: { ok: boolean; hard: number } | null; // cgate.ok 为 boolean 才渲染
+}
+
+/* 出处条渲染模型：与 srcsHtml() 完全等价——逐源徽标按 doc_id 顺序消耗配对
+   （同 doc_id 多源先配先得，per_source 孤儿项不渲染）；.srcs(.closed)>.srcs-t
+   +可选总标/程序闸 chip+span.srcs-list>span.srcs-it（内嵌 v-{verdict} 徽标）
+   +more>0 时 button.srcs-x（data-more=more，'+'+more/'收起'，折叠态不持久化） */
+const srcsModel = computed<SrcsModel | null>(() => {
+  const mm = m.value;
+  if (mm.role !== 'assistant' || !Array.isArray(mm.sources) || !mm.sources.length) return null;
+  const ccList: any[] = (mm.cc && Array.isArray(mm.cc.per_source)) ? mm.cc.per_source.slice() : [];
+  const verdictFor = (docId: unknown): string | null => {
+    for (let i = 0; i < ccList.length; i++) {
+      const e = ccList[i];
+      if (e && typeof e === 'object' && e.doc_id === docId && CC_VERDICT[e.verdict]) {
+        ccList.splice(i, 1);
+        return e.verdict; // 已白名单校验：可安全拼进 class 名
+      }
+    }
+    return null;
+  };
+  const items: SrcItem[] = [];
+  (mm.sources as any[]).forEach((s: any) => {
+    if (s && typeof s === 'object') {
+      const t = [s.doc_id, s.version, s.locator].filter(function (x) { return x; }).join(' ');
+      if (t) {
+        const v = verdictFor(s.doc_id);
+        /* G 徽标：source_tier 白名单（L1/L2/L3）外一律空串不渲染（同 v-* 纪律） */
+        const tier = (s.source_tier === 'L1' || s.source_tier === 'L2'
+            || s.source_tier === 'L3') ? s.source_tier : '';
+        items.push({ text: t, vCls: v ? 'v-' + v : '', vLabel: v ? CC_VERDICT[v] : '', tier });
+      }
+    }
+  });
+  if (!items.length) return null;
+  const oc = (mm.cc && CC_LABEL[mm.cc.overall]) ? mm.cc.overall : '';
+  return {
+    items,
+    more: items.length - SRC_MAXSHOW,
+    overallCls: oc ? 'l-' + oc : '',
+    overallLabel: oc ? CC_LABEL[oc] : '',
+    gate: (mm.cgate && typeof mm.cgate.ok === 'boolean')
+      ? { ok: mm.cgate.ok, hard: mm.cgate.hard }
+      : null,
+  };
+});
+
+/* ============ 批B：出处 chip 预览卡 pv-*（批次A2 按 2.0 §3.4 重排/重刷） ============
+   桌面（hover:hover）mouseenter ≥300ms 延迟显现、mouseleave 即收；触屏
+   （hover:none）tap 切换——同消息同时只开一张（单下标状态），点卡片自身/
+   消息外/Esc 关闭。quote/score/doc_id 全部服务端内容：一律 {{ }} 文本插值
+   （Vue 转义），quote 前端再截 200 字保险。 */
+const canHover: boolean = (function () {
+  try { return typeof window.matchMedia === 'function' && window.matchMedia('(hover: hover)').matches; }
+  catch { return false; }
+})();
+const pvHover = ref(-1);
+const pvTap = ref(-1);
+const rootEl = ref<HTMLElement | null>(null);
+let pvHoverTimer: ReturnType<typeof setTimeout> | null = null;
+function pvShow(i: number): boolean { return pvHover.value === i || pvTap.value === i; }
+function onChipEnter(i: number): void {
+  if (!canHover) return;
+  if (pvHoverTimer) clearTimeout(pvHoverTimer);
+  pvHoverTimer = setTimeout(function () { pvHover.value = i; }, 300); // 2.0：hover ≥300ms 延迟显现（防扫过误开）
+}
+function onChipLeave(): void {
+  if (pvHoverTimer) { clearTimeout(pvHoverTimer); pvHoverTimer = null; }
+  pvHover.value = -1;
+}
+function onChipTap(e: MouseEvent, i: number): void {
+  if (canHover) return; // 桌面模态归 hover 管，click 不掺和
+  const t = e.target as HTMLElement | null;
+  if (t && t.closest && t.closest('.pv-card')) return; // 点卡片自身（滚动/选词）不收起
+  pvTap.value = (pvTap.value === i) ? -1 : i;
+}
+function onDocClick(e: MouseEvent): void { // 点消息外任意处关闭（触屏态）
+  const r = rootEl.value;
+  const t = e.target as Node | null;
+  if (!r || !t || !r.contains(t)) pvTap.value = -1;
+}
+function onDocKey(e: KeyboardEvent): void { // Esc 收卡（2.0 §3.4 交互）
+  if (e.key === 'Escape') { pvTap.value = -1; pvHover.value = -1; }
+}
+function pvQuote(i: number): string {
+  const arr = m.value.sources;
+  const s = Array.isArray(arr) ? arr[i] : null;
+  const q = (s && typeof s === 'object' && typeof s.quote === 'string') ? s.quote.slice(0, 200) : '';
+  return q || '（无摘录）';
+}
+function pvId(i: number): string { // 头部标识行：doc_id+version+locator（mono）
+  const arr = m.value.sources;
+  const s = Array.isArray(arr) ? (arr[i] as any) : null;
+  if (!s || typeof s !== 'object') return '';
+  return [s.doc_id, s.version, s.locator].filter(function (x) { return x; }).join(' ');
+}
+function pvScore(i: number): string { // 底行 score 药丸；非有限数值不渲染
+  const arr = m.value.sources;
+  const s = Array.isArray(arr) ? (arr[i] as any) : null;
+  if (!s || typeof s !== 'object') return '';
+  return (typeof s.score === 'number' && isFinite(s.score)) ? 'score ' + String(s.score) : ''; // toFixed 不安全：直接 String
+}
+
+/* 2.0 §3.4：卡出界防护——show 后量测，横向钳制在视口内（8px 边距）、
+   纵向下出界翻到 chip 上方；流式重排后下次 show 重算（inline 样式先复位） */
+function pvClamp(): void {
+  const root = rootEl.value;
+  if (!root) return;
+  const card = root.querySelector('.pv-card');
+  if (!card) return;
+  const c = card as HTMLElement;
+  c.style.left = '';
+  c.style.top = '';
+  c.style.bottom = '';
+  const cr = c.getBoundingClientRect();
+  const vw = window.innerWidth || document.documentElement.clientWidth;
+  const vh = window.innerHeight || document.documentElement.clientHeight;
+  const overR = cr.right - (vw - 8);
+  if (overR > 0) {
+    const dx = Math.min(overR, cr.left - 8); // 右溢出左移，但不越出左缘
+    if (dx > 0) c.style.left = -dx + 'px';
+  }
+  if (cr.bottom > vh - 8) { // 下出界翻上方（top: calc(100%+6px) ↔ bottom: calc(100%+6px)）
+    c.style.top = 'auto';
+    c.style.bottom = 'calc(100% + 6px)';
+  }
+}
+watch([pvHover, pvTap], function () {
+  if (pvHover.value < 0 && pvTap.value < 0) return;
+  nextTick(pvClamp);
+});
+
+/* +N 展开/收起（transient：不持久化、不入存储；重挂载即回折叠） */
+const open = ref(false);
+
+/* 重新生成按 v-for key 复用组件实例（splice+push 同位）：换 msg 对象时清
+   批B 瞬态态（复制反馈/点开卡/hover 延迟计时器），防旧消息交互状态漏染新答
+   （展开态按批0 契约微差③保留）；末轮集成的反馈瞬态清理段随反馈批4
+   组件退役同删 */
+watch(function () { return props.msg; }, function () {
+  pvTap.value = -1;
+  pvHover.value = -1;
+  if (pvHoverTimer) { clearTimeout(pvHoverTimer); pvHoverTimer = null; }
+  copied.value = false;
+  if (copyTimer) { clearTimeout(copyTimer); copyTimer = null; }
+});
+
+onMounted(function () {
+  document.addEventListener('click', onDocClick);
+  document.addEventListener('keydown', onDocKey);
+});
+onBeforeUnmount(function () {
+  document.removeEventListener('click', onDocClick);
+  document.removeEventListener('keydown', onDocKey);
+  if (pvHoverTimer) { clearTimeout(pvHoverTimer); pvHoverTimer = null; }
+  if (copyTimer) { clearTimeout(copyTimer); copyTimer = null; }
+});
+</script>
+
+<template>
+  <div class="msg bot" :class="{ err: isErr }" ref="rootEl">
+    <div v-if="!isErr" class="role">{{ botLabel }}</div>
+    <div v-if="showOffTopic" class="offtopic">{{ OFFTOPIC_TEXT }}</div>
+    <div v-if="showEvIns" class="offtopic ev">{{ evText }}</div>
+    <div v-if="showGap" class="offtopic gap">{{ gapText }}</div>
+    <div v-if="isErr" class="txt" :class="liveCls">{{ errText }}</div>
+    <div v-else class="txt" :class="liveCls" v-html="bodyHtml"></div>
+    <div v-if="srcsModel" class="srcs" :class="{ closed: srcsModel.more > 0 && !open }">
+      <span class="srcs-t">出处：</span>
+      <span v-if="srcsModel.overallCls" class="srcs-cc-all" :class="srcsModel.overallCls">{{ srcsModel.overallLabel }}</span>
+      <span v-if="srcsModel.gate" class="srcs-gate" :class="srcsModel.gate.ok ? 'g-ok' : 'g-bad'">{{ srcsModel.gate.ok ? '引用核验✓' : '引用核验：' + srcsModel.gate.hard + ' 处不符' }}</span>
+      <span class="srcs-list"><span v-for="(it, i) in srcsModel.items" :key="i" class="srcs-it" @mouseenter="onChipEnter(i)" @mouseleave="onChipLeave" @click="onChipTap($event, i)">[{{ i + 1 }}] {{ it.text }}<span v-if="it.vCls" class="srcs-cc" :class="it.vCls">{{ it.vLabel }}</span><span v-if="it.tier" class="srcs-tier" :class="'t-' + it.tier.toLowerCase()">{{ it.tier }}</span><span v-if="pvShow(i)" class="pv-card" role="dialog" aria-label="出处预览"><span class="pv-head">{{ pvId(i) }}</span><span class="pv-quote">{{ pvQuote(i) }}</span><span class="pv-foot"><span v-if="pvScore(i)" class="pv-score">{{ pvScore(i) }}</span><span v-if="it.vLabel">{{ it.vLabel }}</span></span></span></span></span>
+      <button v-if="srcsModel.more > 0" class="srcs-x" type="button" :data-more="srcsModel.more" @click="open = !open">{{ open ? '收起' : '+' + srcsModel.more }}</button>
+    </div>
+    <div v-if="showAct" class="act-bar">
+      <button class="act-btn act-copy" type="button" @click="onCopy">{{ copied ? '已复制' : '复制' }}</button>
+      <button class="act-btn act-regen" type="button" :disabled="!canRegen" @click="onRegen">重新生成</button>
+      <span v-if="timeText" class="act-time" :title="timeTitle">{{ timeText }}</span>
+      <span v-if="usageText" class="act-tok">{{ usageText }}</span>
+    </div>
+  </div>
+</template>

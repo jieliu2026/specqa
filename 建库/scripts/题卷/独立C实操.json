@@ -1,0 +1,1224 @@
+{
+ "schema_version": 1,
+ "paper_id": "独立C实操",
+ "answer_rubric": "v3",
+ "title": "验证题卷-独立C（实操诊断 28 条）·v3",
+ "source_md_section": "一、实操卷（C01-C12：贴日志/贴 KPI 求排查诊断）；一、四新域实操卷（C13-C28：厂商参数/投诉处理/规划核查/互操作 各 4 题）",
+ "pass_lines": null,
+ "questions": [
+  {
+   "id": "C01",
+   "category": "接入类",
+   "domain": "3gpp",
+   "query": "14:02:11.204 UE#3712 PRACH 前导#1 发射 -110dBm，无 RAR\n14:02:12.231 前导#2 -106dBm，无 RAR（爬坡步进 4dB）\n14:02:13.302 前导#3 -102dBm，无 RAR\n14:02:14.318 前导#4 -98dBm，无 RAR\n14:02:15.377 前导#5 -94dBm，达最大前导次数仍无 RAR → 随机接入失败\n14:02:16.405 T300 超时 → RRC 连接建立失败（T300 expiry）\n工参：preambleInitialReceivedTargetPower=-110，powerRampingStep=dB4，t300=ms1000\n\n问题：失败发生在哪个环节？给出排查步骤与优先核查的参数组。",
+   "judge_type": "relevance",
+   "anchors": [
+    {
+     "expect_doc": [
+      "SPEC-D"
+     ],
+     "expect_locator_pattern": "6\\.1|random access|preamble",
+     "criterion": "top5",
+     "role": "primary",
+     "domain": "3gpp"
+    },
+    {
+     "expect_doc": [
+      "SPEC-G"
+     ],
+     "expect_locator_pattern": "t300",
+     "criterion": "top10_locator",
+     "role": "primary",
+     "domain": "3gpp"
+    },
+    {
+     "expect_doc": [
+      "SPEC-G"
+     ],
+     "expect_locator_pattern": "powerRampingStep|preambleTransMax",
+     "criterion": "top10_locator",
+     "role": "secondary",
+     "domain": "3gpp"
+    }
+   ],
+   "expect_domain": {
+    "domain": "合成卡",
+    "criterion": "top5"
+   },
+   "retest": false
+  },
+  {
+   "id": "C02",
+   "category": "接入类",
+   "domain": "监管",
+   "query": "某地市 数字蜂窝移动通信业务 9 月第 2 周服务报告\n可接入率（网络覆盖）＝86%：位置口径 83%／时间口径 95%；20 秒内接通占比 88%\n参考项：RRC 建立成功率 98.1%，eRAB 建立成功率 99.0%，忙时 PRACH 拥塞率 0.3%\n\n问题：对照《电信服务规范》附录2 的可接入率指标，哪些口径未达标、各差多少？先查哪些环节？",
+   "judge_type": "relevance",
+   "anchors": [
+    {
+     "expect_doc": [
+      "SPEC-N",
+      "SPEC-O"
+     ],
+     "expect_locator_pattern": "2\\.2\\.1|可接入率",
+     "criterion": "top5",
+     "role": "primary",
+     "domain": "监管"
+    }
+   ],
+   "expect_domain": {
+    "domain": "合成卡",
+    "criterion": "top5"
+   },
+   "retest": false
+  },
+  {
+   "id": "C03",
+   "category": "接入类",
+   "domain": "3gpp",
+   "query": "NR 小区 N3.7G-112：RRC 建立成功率 91.4%（局内垫底）\nSSB RSRP 均值 -111dBm，<-116dBm 采样占比 41%，失败集中于 3 个边缘方向\n工参：ssb-periodicityServingCell=sf20，SSB 发射功率按基线模板\n\n问题：可能根因？覆盖侧与参数侧各查什么？SSB 周期往哪个方向调、代价是什么？",
+   "judge_type": "relevance",
+   "anchors": [
+    {
+     "expect_doc": [
+      "SPEC-M"
+     ],
+     "expect_locator_pattern": "ssb|periodicity",
+     "criterion": "top10_locator",
+     "role": "primary",
+     "domain": "3gpp"
+    },
+    {
+     "expect_doc": [
+      "SPEC-K"
+     ],
+     "expect_locator_pattern": "5\\.1\\.1|ss-?rsrp",
+     "criterion": "top5",
+     "role": "primary",
+     "domain": "3gpp"
+    }
+   ],
+   "expect_domain": {
+    "domain": "合成卡",
+    "criterion": "top5"
+   },
+   "retest": false
+  },
+  {
+   "id": "C04",
+   "category": "掉话类",
+   "domain": "监管",
+   "query": "某片区 LTE 忙时：掉话率（通话中断率）6.2%，月均 5.8%\n掉话地理聚类：A/B 两路段 RSRP<-115dBm 采样占 34%；C 工业区 RSRP 正常但上行底噪 +9dB\nRRC 重建成功率 62%\n\n问题：是否违反监管红线？排查优先级怎么排？",
+   "judge_type": "relevance",
+   "anchors": [
+    {
+     "expect_doc": [
+      "SPEC-N",
+      "SPEC-O"
+     ],
+     "expect_locator_pattern": "2\\.2\\.4|掉话率",
+     "criterion": "top5",
+     "role": "primary",
+     "domain": "监管"
+    },
+    {
+     "expect_doc": [
+      "SPEC-G"
+     ],
+     "expect_locator_pattern": "t310",
+     "criterion": "top10_locator",
+     "role": "secondary",
+     "domain": "3gpp"
+    }
+   ],
+   "expect_domain": {
+    "domain": "合成卡",
+    "criterion": "top5"
+   },
+   "retest": false
+  },
+  {
+   "id": "C05",
+   "category": "掉话类",
+   "domain": "3gpp",
+   "query": "15:47:02 连续接收失步，n310 计满（现网 n310=n10）→ 启动 T310（现网 t310=ms2000）\n15:47:04 无同步恢复指示（n311 未触发）\n15:47:06 T310 超时 → 判无线链路失败 → 发起 RRC 重建（cause=otherFailure）\n15:47:09 重建失败 → UE 回 IDLE → 掉话统计+1\n\n问题：这条定时器链怎么工作？现网取值怎么评估？调整方向与代价？",
+   "judge_type": "relevance",
+   "anchors": [
+    {
+     "expect_doc": [
+      "SPEC-G"
+     ],
+     "expect_locator_pattern": "t310",
+     "criterion": "top10_locator",
+     "role": "primary",
+     "domain": "3gpp"
+    },
+    {
+     "expect_doc": [
+      "SPEC-G"
+     ],
+     "expect_locator_pattern": "t310",
+     "criterion": "top5",
+     "role": "primary",
+     "domain": "3gpp"
+    },
+    {
+     "expect_doc": [
+      "SPEC-G"
+     ],
+     "expect_locator_pattern": "n310|n311",
+     "criterion": "top10_locator",
+     "role": "secondary",
+     "domain": "3gpp"
+    }
+   ],
+   "expect_domain": {
+    "domain": "合成卡",
+    "criterion": "top5"
+   },
+   "retest": false
+  },
+  {
+   "id": "C06",
+   "category": "切换类",
+   "domain": "3gpp",
+   "query": "切换出成功率 91.0%；掉话点集中于 RSRP -117~-120dBm 区间（切换带）\n现网：a3-Offset=6（步进 2，对应 12dB），hysteresis=2dB，timeToTrigger=ms480\n邻区关系核查：无漏配告警\n\n问题：为什么掉话集中在 -117dBm 以下？判据怎么构成？参数往哪调、怎么防矫枉过正？",
+   "judge_type": "relevance",
+   "anchors": [
+    {
+     "expect_doc": [
+      "SPEC-G"
+     ],
+     "expect_locator_pattern": "a3-?offset",
+     "criterion": "top10_locator",
+     "role": "primary",
+     "domain": "3gpp"
+    },
+    {
+     "expect_doc": [
+      "SPEC-G"
+     ],
+     "expect_locator_pattern": "hysteresis",
+     "criterion": "top10_locator",
+     "role": "primary",
+     "domain": "3gpp"
+    },
+    {
+     "expect_doc": [
+      "SPEC-G"
+     ],
+     "expect_locator_pattern": "5\\.5\\.4|a3",
+     "criterion": "top5",
+     "role": "primary",
+     "domain": "3gpp"
+    },
+    {
+     "expect_doc": [
+      "SPEC-G"
+     ],
+     "expect_locator_pattern": "timetotrigger",
+     "criterion": "top10_locator",
+     "role": "secondary",
+     "domain": "3gpp"
+    }
+   ],
+   "expect_domain": {
+    "domain": "合成卡",
+    "criterion": "top5"
+   },
+   "retest": false
+  },
+  {
+   "id": "C07",
+   "category": "切换类",
+   "domain": "3gpp",
+   "query": "高铁走廊 A/B 小区重叠带：乒乓切换占比 18%，单 UE 10 分钟切换 14 次\n重叠带内 |ΔRSRP|<3dB 采样占 72%；两小区各自切换成功率均 >98%\n现网：hysteresis=2dB，a3-Offset=2（对应 4dB），timeToTrigger=ms256\n\n问题：根因是什么？参数组合怎么调？各自副作用？",
+   "judge_type": "relevance",
+   "anchors": [
+    {
+     "expect_doc": [
+      "SPEC-G"
+     ],
+     "expect_locator_pattern": "hysteresis",
+     "criterion": "top10_locator",
+     "role": "primary",
+     "domain": "3gpp"
+    },
+    {
+     "expect_doc": [
+      "SPEC-G"
+     ],
+     "expect_locator_pattern": "timetotrigger|a3-?offset",
+     "criterion": "top10_locator",
+     "role": "secondary",
+     "domain": "3gpp"
+    }
+   ],
+   "expect_domain": {
+    "domain": "合成卡",
+    "criterion": "top5"
+   },
+   "retest": false
+  },
+  {
+   "id": "C08",
+   "category": "吞吐类",
+   "domain": "3gpp",
+   "query": "小区边缘用户：上行吞吐 P50=0.8Mbps；UE 发射功率顶格（23dBm）时长占比 71%\n上行 MCS≤4 占比 62%（秩正常）\n工参：p0-NominalPUSCH=-96dBm，alpha=0.8（路损补偿系数，现网值虚构）\n\n问题：受限环节怎么判？参数怎么动？闭环功控命令在其中的作用？",
+   "judge_type": "relevance",
+   "anchors": [
+    {
+     "expect_doc": [
+      "SPEC-G"
+     ],
+     "expect_locator_pattern": "p0-?nominalpusch",
+     "criterion": "top10_locator",
+     "role": "primary",
+     "domain": "3gpp"
+    },
+    {
+     "expect_doc": [
+      "SPEC-D"
+     ],
+     "expect_locator_pattern": "tpc|5\\.1\\.1\\.1|5\\.1\\.2\\.1",
+     "criterion": "top10_locator",
+     "role": "primary",
+     "domain": "3gpp"
+    }
+   ],
+   "expect_domain": {
+    "domain": "合成卡",
+    "criterion": "top5"
+   },
+   "retest": false
+  },
+  {
+   "id": "C09",
+   "category": "吞吐类",
+   "domain": "3gpp",
+   "query": "下行小区均值吞吐 96Mbps；终端上报 CQI 均值 4，CQI≤3 占比 38%，秩 rank1 占比 88%\nRSRP 均值 -98dBm（尚可）；SINR 均值 2.1dB（明显偏低）；邻区 PCI 模三冲突告警 1 条\n\n问题：覆盖尚可而质量差，根因往哪查？CQI 表怎么读？",
+   "judge_type": "relevance",
+   "anchors": [
+    {
+     "expect_doc": [
+      "SPEC-D"
+     ],
+     "expect_locator_pattern": "7\\.2\\.3|cqi",
+     "criterion": "top10_locator",
+     "role": "primary",
+     "domain": "3gpp"
+    }
+   ],
+   "expect_domain": {
+    "domain": "合成卡",
+    "criterion": "top5"
+   },
+   "retest": false
+  },
+  {
+   "id": "C10",
+   "category": "吞吐类",
+   "domain": "监管",
+   "query": "某市 2026-08 测评：移动网络下行均值接入速率 178Mbps，上行 41Mbps（5G 流量占比 68%）\n对照口径：\"信号升格\"专项行动 2025 年底目标\n\n问题：两项速率对照 2025 年底目标各差多少、达标率怎么算？工程提升挂在哪些量上？",
+   "judge_type": "relevance",
+   "anchors": [
+    {
+     "expect_doc": [
+      "SPEC-P",
+      "SPEC-Q"
+     ],
+     "expect_locator_pattern": "220\\s*mbps|45\\s*mbps|主要目标",
+     "criterion": "top5",
+     "role": "primary",
+     "domain": "监管"
+    }
+   ],
+   "expect_domain": {
+    "domain": "合成卡",
+    "criterion": "top5"
+   },
+   "retest": false
+  },
+  {
+   "id": "C11",
+   "category": "参数核查类",
+   "domain": "3gpp",
+   "query": "全网定时器巡检导出（节选）：\n小区 L1073：t310=ms1500，t300=ms3000（基线模板：t310=ms1000，t300=ms1000）\n小区 L1074：t310=ms1000，t300=ms100\n告警：L1073 与基线不一致\n\n问题：t310=ms1500 是否合法枚举？t300=ms3000 呢？巡检校验规则怎么写？",
+   "judge_type": "relevance",
+   "anchors": [
+    {
+     "expect_doc": [
+      "SPEC-G"
+     ],
+     "expect_locator_pattern": "t310",
+     "criterion": "top10_locator",
+     "role": "primary",
+     "domain": "3gpp"
+    },
+    {
+     "expect_doc": [
+      "SPEC-G"
+     ],
+     "expect_locator_pattern": "t300",
+     "criterion": "top10_locator",
+     "role": "primary",
+     "domain": "3gpp"
+    }
+   ],
+   "expect_domain": {
+    "domain": "合成卡",
+    "criterion": "top5"
+   },
+   "retest": false
+  },
+  {
+   "id": "C12",
+   "category": "参数核查类",
+   "domain": "3gpp",
+   "query": "功控巡检：小区 L2210 p0-NominalPUSCH=-140dBm（触发\"疑越界\"告警）\n调度器：上行闭环功控累积模式下双比特命令分布 00:41%／01:22%／10:27%／11:10%\n\n问题：-140 为何触发疑越界？\"00\"命令在累积模式下是什么含义？两条线索怎么合到一起闭案？",
+   "judge_type": "relevance",
+   "anchors": [
+    {
+     "expect_doc": [
+      "SPEC-G"
+     ],
+     "expect_locator_pattern": "p0-?nominalpusch",
+     "criterion": "top10_locator",
+     "role": "primary",
+     "domain": "3gpp"
+    },
+    {
+     "expect_doc": [
+      "SPEC-D"
+     ],
+     "expect_locator_pattern": "tpc|5\\.1\\.1\\.1",
+     "criterion": "top10_locator",
+     "role": "primary",
+     "domain": "3gpp"
+    }
+   ],
+   "expect_domain": {
+    "domain": "合成卡",
+    "criterion": "top5"
+   },
+   "retest": false
+  },
+  {
+   "id": "C13",
+   "category": "厂商参数",
+   "domain": null,
+   "query": "组里实习生把华为 LTE 站的 InterFreqHoA3Offset 改成 2，说『邻区比服务小区高 2dB 就触发异频切换』。我记得厂商这个参数跟协议里的 a3-Offset 不是简单一一对应——它到底对应 3GPP 哪个 IE？取值范围和步进单位是什么？厂商值填 2 实际等于多少 dB？给个权威出处，我好纠正他的理解。",
+   "judge_type": "relevance",
+   "anchors": [
+    {
+     "expect_doc": [
+      "SPEC-G"
+     ],
+     "expect_locator_pattern": "a3-?offset",
+     "criterion": "top10_locator",
+     "role": "primary",
+     "domain": "3gpp"
+    },
+    {
+     "expect_doc": [
+      "SPEC-G"
+     ],
+     "expect_locator_pattern": "offsetfreq|q-?offsetrange",
+     "criterion": "top10_locator",
+     "role": "secondary",
+     "domain": "3gpp"
+    }
+   ],
+   "expect_domain": {
+    "domain": "厂商参数",
+    "criterion": "top5",
+    "match_any": [
+     {
+      "field": "layer",
+      "value": "合成卡"
+     },
+     {
+      "field": "corpus_type",
+      "value": "case_card"
+     },
+     {
+      "field": "source_domain",
+      "value": "synthetic"
+     },
+     {
+      "field": "chunk_type",
+      "value": "case_card"
+     }
+    ]
+   },
+   "retest": false
+  },
+  {
+   "id": "C14",
+   "category": "厂商参数",
+   "domain": null,
+   "query": "华芯混网相邻三站异频切换参数导出（数值均虚构）：\n【华为A站】IntraFreqHoA3Offset=1；InterFreqHoA3Offset=2；IntraFreqHoGroupId=0；InterFreqHoGroupId=0\n【中兴B站】A3InterFreqHoA1ThdRsrp=-95；InterFreqHoA2ThdRsrp=-105；InterFreqHoA2ThdRsrq=-15\n【华为C站】IntraFreqHoA3Offset=3；InterFreqHoA3Offset=2（全网基线模板：IntraFreqHoA3Offset=1）\n\n追问：这批厂商私有参数名各对应 3GPP 哪个字段？哪些取值疑似两家口径没对齐或偏离基线模板？核查结论按表输出，标出优先对齐项。",
+   "judge_type": "relevance",
+   "anchors": [
+    {
+     "expect_doc": [
+      "SPEC-G"
+     ],
+     "expect_locator_pattern": "a3-?offset|hysteresis",
+     "criterion": "top10_locator",
+     "role": "primary",
+     "domain": "3gpp"
+    },
+    {
+     "expect_doc": [
+      "SPEC-F"
+     ],
+     "expect_locator_pattern": "10\\.1\\.3",
+     "criterion": "top10_locator",
+     "role": "secondary",
+     "domain": "3gpp"
+    }
+   ],
+   "expect_domain": {
+    "domain": "厂商参数",
+    "criterion": "top5",
+    "match_any": [
+     {
+      "field": "layer",
+      "value": "合成卡"
+     },
+     {
+      "field": "corpus_type",
+      "value": "case_card"
+     },
+     {
+      "field": "source_domain",
+      "value": "synthetic"
+     },
+     {
+      "field": "chunk_type",
+      "value": "case_card"
+     }
+    ]
+   },
+   "retest": false
+  },
+  {
+   "id": "C15",
+   "category": "厂商参数",
+   "domain": null,
+   "query": "想批量改 LTE 切换的 A3 迟滞和触发时间，华为站走 MML 脚本、中兴站走网管工单。除了命令语法别写错，改前改后还得做哪些事？参数基线归谁审批、改坏了怎么回退、混网两家的值怎么防越改越飘？给一套能直接落到我们制度里的参数修改管理流程要点。",
+   "judge_type": "relevance",
+   "anchors": [
+    {
+     "expect_doc": [
+      "SPEC-G"
+     ],
+     "expect_locator_pattern": "hysteresis",
+     "criterion": "top10_locator",
+     "role": "primary",
+     "domain": "3gpp"
+    },
+    {
+     "expect_doc": [
+      "SPEC-G"
+     ],
+     "expect_locator_pattern": "timetotrigger",
+     "criterion": "top10_locator",
+     "role": "secondary",
+     "domain": "3gpp"
+    }
+   ],
+   "expect_domain": {
+    "domain": "厂商参数",
+    "criterion": "top5",
+    "match_any": [
+     {
+      "field": "layer",
+      "value": "合成卡"
+     },
+     {
+      "field": "corpus_type",
+      "value": "case_card"
+     },
+     {
+      "field": "source_domain",
+      "value": "synthetic"
+     },
+     {
+      "field": "chunk_type",
+      "value": "case_card"
+     }
+    ]
+   },
+   "retest": false
+  },
+  {
+   "id": "C16",
+   "category": "厂商参数",
+   "domain": null,
+   "query": "5G 参数核查时看到 gNB 侧 ssb-PeriodicityServingCell 配的 ms10，厂商网管上叫『SSB周期10ms』；另有个『SSB发射功率』厂商名 ss-PBCH-BlockPower，配了 -11。这两个厂商叫法对应协议 RRC 里哪个字段？取值域和枚举集各是什么？SSB 周期从 ms20 改 ms10、功率从 -11 改 -6，网管上分别看哪些测量量核实真实生效了？",
+   "judge_type": "relevance",
+   "anchors": [
+    {
+     "expect_doc": [
+      "SPEC-M"
+     ],
+     "expect_locator_pattern": "ss-?pbch-?blockpower",
+     "criterion": "top10_locator",
+     "role": "primary",
+     "domain": "3gpp"
+    },
+    {
+     "expect_doc": [
+      "SPEC-M"
+     ],
+     "expect_locator_pattern": "ssb-?periodicityservingcell",
+     "criterion": "top10_locator",
+     "role": "primary",
+     "domain": "3gpp"
+    },
+    {
+     "expect_doc": [
+      "SPEC-K"
+     ],
+     "expect_locator_pattern": "5\\.1\\.1|ss-?rsrp",
+     "criterion": "top5",
+     "role": "secondary",
+     "domain": "3gpp"
+    }
+   ],
+   "expect_domain": {
+    "domain": "厂商参数",
+    "criterion": "top5",
+    "match_any": [
+     {
+      "field": "layer",
+      "value": "合成卡"
+     },
+     {
+      "field": "corpus_type",
+      "value": "case_card"
+     },
+     {
+      "field": "source_domain",
+      "value": "synthetic"
+     },
+     {
+      "field": "chunk_type",
+      "value": "case_card"
+     }
+    ]
+   },
+   "retest": false
+  },
+  {
+   "id": "C17",
+   "category": "投诉处理",
+   "domain": null,
+   "query": "客服转来一张工单：用户投诉在小区里打电话老是掉话、视频通话卡，要求上门。周边三个宏站加一套室分。从接单到结单，网优侧该怎么走？现场测试测什么（RSRP/SINR/语音 MOS？）、哪一步拉网侧数据（MR、掉话话统、小区 KPI？）、给用户的答复口径和对内的结单报告各要写什么？监管对答复时限最长按多少天算？",
+   "judge_type": "relevance",
+   "anchors": [
+    {
+     "expect_doc": [
+      "SPEC-N",
+      "SPEC-O"
+     ],
+     "expect_locator_pattern": "第十三条",
+     "criterion": "top5",
+     "role": "primary",
+     "domain": "监管"
+    },
+    {
+     "expect_doc": [
+      "SPEC-N",
+      "SPEC-O"
+     ],
+     "expect_locator_pattern": "2\\.2\\.4|掉话率",
+     "criterion": "top10_locator",
+     "role": "secondary",
+     "domain": "监管"
+    }
+   ],
+   "expect_domain": {
+    "domain": "投诉处理",
+    "criterion": "top5",
+    "match_any": [
+     {
+      "field": "layer",
+      "value": "合成卡"
+     },
+     {
+      "field": "corpus_type",
+      "value": "case_card"
+     },
+     {
+      "field": "source_domain",
+      "value": "synthetic"
+     },
+     {
+      "field": "chunk_type",
+      "value": "case_card"
+     }
+    ]
+   },
+   "retest": false
+  },
+  {
+   "id": "C18",
+   "category": "投诉处理",
+   "domain": null,
+   "query": "本周某网格投诉台账导出（数值均虚构）：\n① 09-15 馨苑小区用户A：打电话掉线，第 2 次投诉，要求上门\n② 09-16 滨江 4A 景区商户：直播卡顿、上行慢\n③ 09-17 高新区写字楼用户：5G 满格但网页打不开\n④ 09-18 铁路沿线国道乘车：导航语音断续\n⑤ 09-19 馨苑小区用户B：视频通话卡（与①同小区）\n网格同期 KPI：掉话率 1.9%，RRC 建立成功率 99.2%，5G 驻留比 41%\n\n追问：这五单怎么分类分级、处理顺序怎么排？哪几单算 clustered 聚集性投诉可以合并处理？疑似网络侧原因的第一排查动作各是什么？哪单要对齐重点场所覆盖口径上报？",
+   "judge_type": "relevance",
+   "anchors": [
+    {
+     "expect_doc": [
+      "SPEC-N",
+      "SPEC-O"
+     ],
+     "expect_locator_pattern": "第十三条",
+     "criterion": "top5",
+     "role": "primary",
+     "domain": "监管"
+    },
+    {
+     "expect_doc": [
+      "SPEC-P",
+      "SPEC-Q"
+     ],
+     "expect_locator_pattern": "重点任务|重点场所",
+     "criterion": "top10_locator",
+     "role": "secondary",
+     "domain": "监管"
+    }
+   ],
+   "expect_domain": {
+    "domain": "投诉处理",
+    "criterion": "top5",
+    "match_any": [
+     {
+      "field": "layer",
+      "value": "合成卡"
+     },
+     {
+      "field": "corpus_type",
+      "value": "case_card"
+     },
+     {
+      "field": "source_domain",
+      "value": "synthetic"
+     },
+     {
+      "field": "chunk_type",
+      "value": "case_card"
+     }
+    ]
+   },
+   "retest": false
+  },
+  {
+   "id": "C19",
+   "category": "投诉处理",
+   "domain": null,
+   "query": "用户投诉家里信号差，我们现场测过、加了个微站、也答复了，用户还是不满意，直接申诉到工信部了。什么条件下申诉会被受理？如果我们当初超了处理时限或者答复敷衍，公司会承担什么后果？这单申诉我作为网优接口人要补哪些材料——测试报告、优化记录、答复凭证，还有别的吗？",
+   "judge_type": "relevance",
+   "anchors": [
+    {
+     "expect_doc": [
+      "SPEC-N",
+      "SPEC-O"
+     ],
+     "expect_locator_pattern": "第十三条",
+     "criterion": "top5",
+     "role": "primary",
+     "domain": "监管"
+    },
+    {
+     "expect_doc": [
+      "SPEC-N",
+      "SPEC-O"
+     ],
+     "expect_locator_pattern": "附录1|1\\.1\\.1",
+     "criterion": "top10_locator",
+     "role": "secondary",
+     "domain": "监管"
+    }
+   ],
+   "expect_domain": {
+    "domain": "投诉处理",
+    "criterion": "top5",
+    "match_any": [
+     {
+      "field": "layer",
+      "value": "合成卡"
+     },
+     {
+      "field": "corpus_type",
+      "value": "case_card"
+     },
+     {
+      "field": "source_domain",
+      "value": "synthetic"
+     },
+     {
+      "field": "chunk_type",
+      "value": "case_card"
+     }
+    ]
+   },
+   "retest": false
+  },
+  {
+   "id": "C20",
+   "category": "投诉处理",
+   "domain": null,
+   "query": "市里办马拉松，现场指挥部投诉起点区域视频回传发不出去，工单群里用户刷视频卡的投诉也堆起来了。现场应急通信车已开到位、F/A 两层都开着、负荷拉满。这种保障型聚集投诉怎么处理——现场负荷均衡、参数临时调整、赛后恢复，动作顺序怎么排？赛后给主办方和用户的总结答复里，引用哪些公开口径的指标（上行速率目标、重点场所覆盖标准）比较稳妥？",
+   "judge_type": "relevance",
+   "anchors": [
+    {
+     "expect_doc": [
+      "SPEC-P",
+      "SPEC-Q"
+     ],
+     "expect_locator_pattern": "重点任务|重点场所",
+     "criterion": "top5",
+     "role": "primary",
+     "domain": "监管"
+    },
+    {
+     "expect_doc": [
+      "SPEC-P",
+      "SPEC-Q"
+     ],
+     "expect_locator_pattern": "220\\s*mbps|45\\s*mbps|主要目标",
+     "criterion": "top10_locator",
+     "role": "secondary",
+     "domain": "监管"
+    }
+   ],
+   "expect_domain": {
+    "domain": "投诉处理",
+    "criterion": "top5",
+    "match_any": [
+     {
+      "field": "layer",
+      "value": "合成卡"
+     },
+     {
+      "field": "corpus_type",
+      "value": "case_card"
+     },
+     {
+      "field": "source_domain",
+      "value": "synthetic"
+     },
+     {
+      "field": "chunk_type",
+      "value": "case_card"
+     }
+    ]
+   },
+   "retest": false
+  },
+  {
+   "id": "C21",
+   "category": "规划核查",
+   "domain": null,
+   "query": "簇优化重规划 PCI 后核查脚本报了一批告警：有的是『同频邻区模3相同』，有的是『某小区两个邻区 PCI 一样』。这两类是一回事吗？模3干扰的物理层机理到底是什么（跟 CRS、PSS 什么关系）？给我一套 PCI 规划核查规则：复用距离怎么定、哪些算红线必须改、哪些可暂容忍？全市 504 个 PCI、六个频点层加密集室分，规划池怎么划分？",
+   "judge_type": "relevance",
+   "anchors": [
+    {
+     "expect_doc": [
+      "SPEC-F"
+     ],
+     "expect_locator_pattern": "22\\.3\\.5|pci",
+     "criterion": "top10_locator",
+     "role": "primary",
+     "domain": "3gpp"
+    },
+    {
+     "expect_doc": [
+      "SPEC-C"
+     ],
+     "expect_locator_pattern": "6\\.11|6\\.10|synchronization",
+     "criterion": "top10_locator",
+     "role": "primary",
+     "domain": "3gpp"
+    }
+   ],
+   "expect_domain": {
+    "domain": "规划核查",
+    "criterion": "top5",
+    "match_any": [
+     {
+      "field": "layer",
+      "value": "合成卡"
+     },
+     {
+      "field": "corpus_type",
+      "value": "case_card"
+     },
+     {
+      "field": "source_domain",
+      "value": "synthetic"
+     },
+     {
+      "field": "chunk_type",
+      "value": "case_card"
+     }
+    ]
+   },
+   "retest": false
+  },
+  {
+   "id": "C22",
+   "category": "规划核查",
+   "domain": null,
+   "query": "明年全市重划 TAC，现在 32 个 TA。TA 边界上用户反映信号格来回跳、高铁沿线 TAU 请求率高，MME 寻呼负荷也不均衡。重划要遵循哪些原则？边界要不要避开街道和话务密集区？TA list 怎么配才能压住边界乒乓更新？CSFB 区域的 TA 跟 2/3G LAC 怎么对齐？最后验收指标（TAU 成功率、寻呼成功率）门槛怎么定？",
+   "judge_type": "relevance",
+   "anchors": [
+    {
+     "expect_doc": [
+      "SPEC-G"
+     ],
+     "expect_locator_pattern": "5\\.2\\.2\\.7|trackingarea",
+     "criterion": "top10_locator",
+     "role": "primary",
+     "domain": "3gpp"
+    },
+    {
+     "expect_doc": [
+      "SPEC-M"
+     ],
+     "expect_locator_pattern": "5\\.2\\.2\\.4|registrationarea|trackingarea",
+     "criterion": "top10_locator",
+     "role": "primary",
+     "domain": "3gpp"
+    }
+   ],
+   "expect_domain": {
+    "domain": "规划核查",
+    "criterion": "top5",
+    "match_any": [
+     {
+      "field": "layer",
+      "value": "合成卡"
+     },
+     {
+      "field": "corpus_type",
+      "value": "case_card"
+     },
+     {
+      "field": "source_domain",
+      "value": "synthetic"
+     },
+     {
+      "field": "chunk_type",
+      "value": "case_card"
+     }
+    ]
+   },
+   "retest": false
+  },
+  {
+   "id": "C23",
+   "category": "规划核查",
+   "domain": null,
+   "query": "簇优化路测发现某路段 UE 反复上报 PCI 287、RSRP -89dBm 的最强邻区，服务小区 PCI 123 都掉到 -97dBm 了，切换命令却一直指向 PCI 312，最后 UE 掉线重建。事后拉源小区邻区列表果然没有 287。这算实锤漏配邻区吗？核查和补配的完整流程怎么走？除了路测，还有什么手段能批量发现这种漏配（MR TopN 强小区？ANR 自建立？）？补完之后怎么验证没引入新的乒乓？",
+   "judge_type": "relevance",
+   "anchors": [
+    {
+     "expect_doc": [
+      "SPEC-F"
+     ],
+     "expect_locator_pattern": "22\\.3\\.3|22\\.3\\.4|neighbour relation",
+     "criterion": "top10_locator",
+     "role": "primary",
+     "domain": "3gpp"
+    },
+    {
+     "expect_doc": [
+      "SPEC-F"
+     ],
+     "expect_locator_pattern": "10\\.1\\.3",
+     "criterion": "top10_locator",
+     "role": "secondary",
+     "domain": "3gpp"
+    }
+   ],
+   "expect_domain": {
+    "domain": "规划核查",
+    "criterion": "top5",
+    "match_any": [
+     {
+      "field": "layer",
+      "value": "合成卡"
+     },
+     {
+      "field": "corpus_type",
+      "value": "case_card"
+     },
+     {
+      "field": "source_domain",
+      "value": "synthetic"
+     },
+     {
+      "field": "chunk_type",
+      "value": "case_card"
+     }
+    ]
+   },
+   "retest": false
+  },
+  {
+   "id": "C24",
+   "category": "规划核查",
+   "domain": null,
+   "query": "季度工参稽核抽了全市 500 个站：有的小区方位角跟 MR 覆盖反推方向差 30° 以上，有的机械下倾跟电调记录对不上，还有两个站经纬度落在河面中间。这种工参错误对优化判断（切换关系、邻区规划、覆盖预测）具体有什么危害？除了爬塔打罗盘，有什么自动化稽核手段——基于 MDT/MR 的位置校验、路测标定？发现→核实→整改→复验的闭环流程怎么设计、各步落在哪个角色？",
+   "judge_type": "relevance",
+   "anchors": [
+    {
+     "expect_doc": [
+      "SPEC-A"
+     ],
+     "expect_locator_pattern": "mdt|drive|logged|摘要",
+     "criterion": "top5",
+     "role": "primary",
+     "domain": "3gpp"
+    },
+    {
+     "expect_doc": [
+      "SPEC-L"
+     ],
+     "expect_locator_pattern": "21\\.5|mdt",
+     "criterion": "top10_locator",
+     "role": "secondary",
+     "domain": "3gpp"
+    }
+   ],
+   "expect_domain": {
+    "domain": "规划核查",
+    "criterion": "top5",
+    "match_any": [
+     {
+      "field": "layer",
+      "value": "合成卡"
+     },
+     {
+      "field": "corpus_type",
+      "value": "case_card"
+     },
+     {
+      "field": "source_domain",
+      "value": "synthetic"
+     },
+     {
+      "field": "chunk_type",
+      "value": "case_card"
+     }
+    ]
+   },
+   "retest": false
+  },
+  {
+   "id": "C25",
+   "category": "互操作",
+   "domain": null,
+   "query": "NSA 组网，终端经常不驻留在我们配的锚点小区上，SCG 添加成功率忽高忽低，B1 上报也少。听说要开『锚点优选』，给 4G 多频段配小区重选优先级——有的地市把 F 频段调高、有的把 D 频段调高。优先级到底怎么影响空闲态驻留和连接态 B1 触发？锚点跟 5G 要求同覆盖，工参和覆盖一致性怎么核查？锚点优先级配错了会出什么现象（乒乓驻留？SCG 添加失败？）？",
+   "judge_type": "relevance",
+   "anchors": [
+    {
+     "expect_doc": [
+      "SPEC-G"
+     ],
+     "expect_locator_pattern": "5\\.5\\.4\\.7|b1-?threshold|nr-?rsrp",
+     "criterion": "top10_locator",
+     "role": "primary",
+     "domain": "3gpp"
+    },
+    {
+     "expect_doc": [
+      "SPEC-G"
+     ],
+     "expect_locator_pattern": "cellreselectionpriority",
+     "criterion": "top10_locator",
+     "role": "secondary",
+     "domain": "3gpp"
+    }
+   ],
+   "expect_domain": {
+    "domain": "互操作",
+    "criterion": "top5",
+    "match_any": [
+     {
+      "field": "layer",
+      "value": "合成卡"
+     },
+     {
+      "field": "corpus_type",
+      "value": "case_card"
+     },
+     {
+      "field": "source_domain",
+      "value": "synthetic"
+     },
+     {
+      "field": "chunk_type",
+      "value": "case_card"
+     }
+    ]
+   },
+   "retest": false
+  },
+  {
+   "id": "C26",
+   "category": "互操作",
+   "domain": null,
+   "query": "SA 语音走 EPS Fallback，用户反映打电话建立失败或者特别慢。路测信令看：基站下发了 B1 测量控制、UE 也上报了 B1，但 NR 侧没走切换而是释放重定向回落；回到 LTE 后 IMS 重注册失败回了 503。这条链路上可能卡在哪几个环节——B1 门限配太高？重定向目标频点/优先级配错？4G 侧 VoLTE 没开？IMS 注册态超时？每个环节分别查什么配置、看什么计数器？",
+   "judge_type": "relevance",
+   "anchors": [
+    {
+     "expect_doc": [
+      "SPEC-L"
+     ],
+     "expect_locator_pattern": "16\\.5|fallback",
+     "criterion": "top10_locator",
+     "role": "primary",
+     "domain": "3gpp"
+    },
+    {
+     "expect_doc": [
+      "SPEC-M"
+     ],
+     "expect_locator_pattern": "5\\.5\\.4\\.8|b1-?threshold|event\\s*b1|voicefallback",
+     "criterion": "top10_locator",
+     "role": "primary",
+     "domain": "3gpp"
+    }
+   ],
+   "expect_domain": {
+    "domain": "互操作",
+    "criterion": "top5",
+    "match_any": [
+     {
+      "field": "layer",
+      "value": "合成卡"
+     },
+     {
+      "field": "corpus_type",
+      "value": "case_card"
+     },
+     {
+      "field": "source_domain",
+      "value": "synthetic"
+     },
+     {
+      "field": "chunk_type",
+      "value": "case_card"
+     }
+    ]
+   },
+   "retest": false
+  },
+  {
+   "id": "C27",
+   "category": "互操作",
+   "domain": null,
+   "query": "周报里某县『4G 互 5G 切换成功率（基于 B1 触发）』从 96% 掉到 88%，反向 5G 互 4G 正常。这种单向劣化怎么排查？B1/B2 门限跟迟滞、触发时间这几个参数组合怎么配才对？门限压低会乒乓甚至掉话，抬高了终端切不过去一直压在 4G 上——平衡点怎么找？给排查步骤和调参原则，最好带防矫枉过正的核查动作。",
+   "judge_type": "relevance",
+   "anchors": [
+    {
+     "expect_doc": [
+      "SPEC-G"
+     ],
+     "expect_locator_pattern": "5\\.5\\.4\\.7|5\\.5\\.4\\.8|event b",
+     "criterion": "top10_locator",
+     "role": "primary",
+     "domain": "3gpp"
+    },
+    {
+     "expect_doc": [
+      "SPEC-G"
+     ],
+     "expect_locator_pattern": "nr-?rsrp|thresholdnr",
+     "criterion": "top10_locator",
+     "role": "secondary",
+     "domain": "3gpp"
+    }
+   ],
+   "expect_domain": {
+    "domain": "互操作",
+    "criterion": "top5",
+    "match_any": [
+     {
+      "field": "layer",
+      "value": "合成卡"
+     },
+     {
+      "field": "corpus_type",
+      "value": "case_card"
+     },
+     {
+      "field": "source_domain",
+      "value": "synthetic"
+     },
+     {
+      "field": "chunk_type",
+      "value": "case_card"
+     }
+    ]
+   },
+   "retest": false
+  },
+  {
+   "id": "C28",
+   "category": "互操作",
+   "domain": null,
+   "query": "电联共建共享区域，我们 4G 锚点用的是对方共享站。用户投诉 5G 上不去、或者刚上 5G 又被踢回 4G，后台看 SCG 释放次数偏高。共建共享场景下 4/5G 互操作优化跟自建网有什么不一样：锚点选择权归谁、B1/A2 这些互操作参数基线谁定、跨方问题责任怎么分界？一线怎么先分清是 SCG 添加失败、SCG 异常释放还是驻留策略问题？",
+   "judge_type": "relevance",
+   "anchors": [
+    {
+     "expect_doc": [
+      "SPEC-B"
+     ],
+     "expect_locator_pattern": "scg|dual connectivity|failure",
+     "criterion": "top5",
+     "role": "primary",
+     "domain": "3gpp"
+    },
+    {
+     "expect_doc": [
+      "SPEC-F"
+     ],
+     "expect_locator_pattern": "6\\.5|dual connectivity",
+     "criterion": "top10_locator",
+     "role": "secondary",
+     "domain": "3gpp"
+    }
+   ],
+   "expect_domain": {
+    "domain": "互操作",
+    "criterion": "top5",
+    "match_any": [
+     {
+      "field": "layer",
+      "value": "合成卡"
+     },
+     {
+      "field": "corpus_type",
+      "value": "case_card"
+     },
+     {
+      "field": "source_domain",
+      "value": "synthetic"
+     },
+     {
+      "field": "chunk_type",
+      "value": "case_card"
+     }
+    ]
+   },
+   "retest": false
+  }
+ ],
+ "public_transform": "doc ids surrogated and provenance metadata stripped for public release"
+}

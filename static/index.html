@@ -1,0 +1,957 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#ffffff">
+<title>AI 助手</title>
+<script>
+/* 防首帧闪烁：localStorage（手动选择）> 系统偏好，首帧前把主题挂到 <html>；
+   受限 webview 访问 localStorage 抛 SecurityError，统一兜底 */
+(function () {
+  var t = null;
+  try { t = localStorage.getItem('qabot_theme'); } catch (e) {}
+  if (t !== 'light' && t !== 'dark') {
+    t = (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+  }
+  document.documentElement.dataset.theme = t;
+  var m = document.querySelector('meta[name="theme-color"]');
+  if (m) m.content = (t === 'dark') ? '#1e1e1e' : '#ffffff';
+})();
+</script>
+<style>
+  /* ============ 设计 token ============
+     灰阶带蓝相（非纯灰）；强调色靛蓝单一色系；暗色按 Material 口径
+     基面 #121212 起步、层级靠表面提亮、错误色降饱和提亮。 */
+  :root {
+    color-scheme: light;
+    /* 灰阶（带蓝相） */
+    --g-50:#f7f8fa; --g-100:#eef0f4; --g-200:#e3e6ec; --g-300:#cdd2dc;
+    --g-400:#a4abba; --g-500:#737b8c; --g-600:#565e6f; --g-700:#3f4655;
+    --g-800:#2a2f3a; --g-900:#1b1f27;
+    /* 强调色（靛蓝） */
+    --acc-50:#eef2fe; --acc-100:#dfe6fd; --acc-200:#c5d2fb; --acc-300:#a1b5f6;
+    --acc-400:#7d94ef; --acc-500:#5c74e6; --acc-600:#4459cf; --acc-700:#3748a8;
+    --acc-800:#2d3b85; --acc-900:#253068;
+    /* 语义面 */
+    --bg:#f7f8fa; --surface:#ffffff; --surface-2:#fbfcfe;
+    --ink:#1b1f27; --ink-2:#565e6f; --ink-3:#6b7383; /* ink-3 需在 #fbfcfe 上 ≥4.5:1 */
+    --line:#e3e6ec; --line-strong:#cdd2dc;
+    --accent:#4459cf; --accent-hover:#3748a8; --accent-ink:#3748a8;
+    --accent-tint:#eef2fe; --accent-tink:#253068; --tint-line:#c5d2fb;
+    --ok:#2f9e44; --err:#c92a2a;
+    --err-tint:#fdf2f2; --err-line:#f0c9c9;
+    --focus:#5c74e6; --sel-bg:#dfe6fd; --sel-ink:#253068;
+    /* 排版/间距/圆角/网格 */
+    --font-sans:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+      "Helvetica Neue", Arial, "PingFang SC", "HarmonyOS Sans SC", "MiSans",
+      "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans SC", sans-serif;
+    --font-mono:ui-monospace, "SF Mono", "Cascadia Code", "Cascadia Mono",
+      Menlo, Consolas, "Liberation Mono", monospace;
+    --fs-12:12px; --fs-13:13px; --fs-15:15px; --fs-16:16px; --fs-17:17px;
+    --fs-20:20px; --fs-24:24px;
+    --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:32px; --sp-7:48px;
+    --r-1:6px; --r-2:10px; --r-3:14px;
+    --col:720px; /* 单一内容列（瑞士网格） */
+    --shadow-pop:0 10px 15px -3px rgb(0 0 0/.1), 0 4px 6px -4px rgb(0 0 0/.1);
+    /* 纸感噪点（黑颗粒，暗色主题换白颗粒）；浅底显脏则再降 opacity */
+    --noise:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg:#121212; --surface:#1e1e1e; --surface-2:#242424;
+    --ink:#e9eaee; --ink-2:#aab0bd; --ink-3:#8f95a3;
+    --line:#2c2f36; --line-strong:#3b3f49;
+    --accent:#4459cf; --accent-hover:#3748a8; --accent-ink:#a1b5f6;
+    --accent-tint:#232a45; --accent-tink:#c5d2fb; --tint-line:#3a4468;
+    --ok:#51cf66; --err:#f0838f;
+    --err-tint:#3a2226; --err-line:#5c3237;
+    --focus:#7d94ef; --sel-bg:#33406e; --sel-ink:#e9eaee;
+    --noise:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeColorMatrix type='matrix' values='-1 0 0 0 1 0 -1 0 0 1 0 0 -1 0 1 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    font-family: var(--font-sans); font-size: var(--fs-15); line-height: 1.7;
+    background-color: var(--bg); background-image: var(--noise); background-repeat: repeat;
+    color: var(--ink); display: flex; flex-direction: column;
+    -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%;
+    font-kerning: normal;
+    text-autospace: ideograph-alpha ideograph-numeric;
+  }
+  :root[data-theme="dark"] body { -webkit-font-smoothing: antialiased; }
+  ::selection { background: var(--sel-bg); color: var(--sel-ink); }
+
+  /* ============ 三段式骨架：全宽横线 + 内容对齐同一 720px 网格 ============ */
+  header, footer { padding-inline: max(16px, calc((100% - var(--col)) / 2)); }
+  header {
+    background: var(--surface); border-bottom: 1px solid var(--line);
+    padding-block: 12px; display: flex; align-items: center; gap: 10px;
+    position: sticky; top: 0; z-index: 5;
+  }
+  header .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--g-400); flex: none; }
+  header .dot[data-state="ok"] { background: var(--ok); }
+  header .dot[data-state="down"] { background: var(--err); }
+  header .name { font-weight: 600; font-size: var(--fs-15); letter-spacing: .2px; }
+  header .iconbtn {
+    margin-left: auto; width: 32px; height: 32px; border: none; background: none;
+    color: var(--ink-2); border-radius: var(--r-1); cursor: pointer;
+    display: grid; place-items: center; padding: 0;
+  }
+  header .iconbtn svg { width: 18px; height: 18px; }
+  header .iconbtn .ico-sun { display: none; }
+  :root[data-theme="dark"] header .iconbtn .ico-sun { display: block; }
+  :root[data-theme="dark"] header .iconbtn .ico-moon { display: none; }
+  header .clear {
+    border: none; background: none; color: var(--ink-2);
+    font-size: var(--fs-13); cursor: pointer; padding: 4px 8px; border-radius: var(--r-1);
+  }
+  header .logout {
+    border: none; background: none; color: var(--ink-2);
+    font-size: var(--fs-13); cursor: pointer; padding: 4px 8px; border-radius: var(--r-1);
+  }
+  main {
+    flex: 1; overflow-y: auto; padding: 8px max(12px, calc((100% - var(--col)) / 2));
+    scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent;
+    overscroll-behavior: contain;
+  }
+  main::-webkit-scrollbar { width: 8px; }
+  main::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 4px; }
+  main::-webkit-scrollbar-track { background: transparent; }
+  main { display: flex; flex-direction: column; }
+  .thread { max-width: 100%; margin: 0 auto; width: 100%; }
+  .thread.empty { margin: auto auto; } /* 空状态垂直居中；内容超出时 margin 收零不碍滚动 */
+
+  /* ============ 消息层（不对称）：用户=右置浅底气泡；AI=全宽文档流 ============ */
+  .msg { word-break: break-word; }
+  .msg.user {
+    margin: 28px auto 0 0; width: fit-content; max-width: 78%;
+    background: var(--accent-tint); color: var(--accent-tink);
+    border: 1px solid var(--tint-line);
+    border-radius: var(--r-3); border-bottom-right-radius: 4px;
+    padding: 9px 14px; font-size: var(--fs-15); line-height: 1.65; white-space: pre-wrap;
+  }
+  .msg.bot { margin-top: 10px; }
+  .msg:first-child { margin-top: 8px; }
+  .msg.bot .role {
+    font-size: var(--fs-12); color: var(--ink-3); font-weight: 500;
+    letter-spacing: .03em; margin-bottom: 2px;
+  }
+  .msg.bot .txt {
+    font-size: var(--fs-16); line-height: 1.75;
+    max-width: 40em; /* 行长控制：约 30-40 汉字/行 */
+  }
+  .msg.bot.err .txt { white-space: pre-wrap; } /* 错误消息不走 markdown，保持纯文本折行 */
+  .msg.bot.err {
+    margin-top: 10px; border-left: 3px solid var(--err);
+    background: var(--err-tint); border-radius: 0 var(--r-1) var(--r-1) 0;
+    padding: 10px 14px; font-size: var(--fs-13); color: var(--err);
+  }
+  .hint { text-align: center; color: var(--ink-3); font-size: var(--fs-13); margin: 24px auto 0; max-width: 90%; line-height: 1.7; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin: 14px auto 0; max-width: 92%; }
+  .chip {
+    border: 1px solid var(--g-400); background: var(--surface); color: var(--ink-2);
+    font-size: var(--fs-13); font-family: inherit; border-radius: 999px;
+    padding: 7px 14px; cursor: pointer;
+  }
+  .chip:active { background: var(--surface-2); }
+
+  footer {
+    background: var(--surface); border-top: 1px solid var(--line);
+    padding-block: 10px;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  }
+  .codebar { display: none; gap: 8px; margin-bottom: 8px; }
+  .codebar.show { display: flex; }
+  .codebar input {
+    flex: 1; border: 1px solid var(--line-strong); border-radius: var(--r-2); padding: 9px 12px;
+    font-size: 16px; font-family: inherit; color: var(--ink); background: var(--surface-2); outline: none;
+  }
+  .codebar button, .row button.send {
+    border: none; background: var(--accent); color: #fff; border-radius: var(--r-2);
+    padding: 9px 16px; font-size: var(--fs-13); cursor: pointer; flex: none;
+  }
+  .row { display: flex; gap: 10px; align-items: flex-end; }
+  .row textarea {
+    flex: 1; resize: none; border: 1px solid var(--line-strong); border-radius: var(--r-2);
+    padding: 10px 12px; font-size: 16px; font-family: inherit; outline: none;
+    max-height: 120px; line-height: 1.5; background: var(--surface-2); color: var(--ink);
+  }
+  .codebar input::placeholder, .row textarea::placeholder { color: var(--ink-3); opacity: 1; }
+  .codebar input:focus, .row textarea:focus {
+    border-color: var(--focus);
+    box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--focus);
+  }
+  button:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--focus);
+  }
+  .row button.send { height: 42px; min-width: 64px; }
+  .row button.send:disabled { opacity: .5; }
+  .disclaimer { text-align: center; color: var(--ink-3); font-size: var(--fs-12); padding: 6px 0 2px; }
+  /* 话术批（2026-10-16，P2-17）：覆盖范围公告行——复用 disclaimer 款式，仅收紧上距 */
+  .disclaimer.coverage { padding-top: 0; }
+  /* 备案信任徽章带（2026-09-26 挂标、09-28 放大为徽章带）：页脚独立视觉带，
+     两枚徽章卡（边框+圆角+淡底）横排居中、窄屏竖排；全走既有 token 明暗自适 */
+  .icp { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 14px;
+    margin-top: 8px; padding: 10px 0 2px; border-top: 1px solid var(--line); }
+  .icp a { display: inline-flex; align-items: center; gap: 7px;
+    padding: 8px 16px; border: 1px solid var(--tint-line); border-radius: var(--r-2);
+    background: var(--accent-tint); color: var(--accent-tink);
+    font-size: var(--fs-15); font-weight: 600; line-height: 1.4; text-decoration: none; }
+  .icp .icp-icon { display: inline-block; width: 20px; height: 20px; flex: none; color: inherit; }
+  .icp img.icp-icon { width: 24px; height: 24px; }
+  .typing::after { content: "▍"; animation: blink 1s infinite; color: var(--ink-2); }
+  @keyframes blink { 50% { opacity: 0; } }
+  /* 流式等待指示：首 delta 前的三点脉冲，delta 到达后切回文本光标；
+     超 2 秒仍无首 delta 换文案（等待心理暗示，2026-09-21 批1） */
+  .msg.bot .txt.waiting::after {
+    content: "···"; color: var(--ink-3); margin-left: 4px;
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+  .msg.bot .txt.waiting.waitlong::after { content: "正在检索语料…"; }
+  @keyframes pulse { 50% { opacity: .2; } }
+  /* off_topic 提示（低分未命中语料，2026-09-21 批1）：气泡顶部一行说明 */
+  .msg.bot .offtopic {
+    font-size: var(--fs-12); color: var(--ink-3); line-height: 1.6;
+    margin: 2px 0 6px; padding-bottom: 5px; border-bottom: 1px dashed var(--line);
+  }
+  /* 话术批（2026-10-16）：off_topic 可选 note 渠道引导行——基础行随行去
+     下边框（整块单虚线收在末行），note 行零自身描边 */
+  .msg.bot .offtopic.withnote { margin-bottom: 0; padding-bottom: 0; border-bottom: none; }
+  .msg.bot .offtopic.note { margin-top: 0; }
+  /* 回到底部浮钮（贴底滚动纪律：上滑即停跟随、滚回恢复） */
+  .jump {
+    position: fixed; right: max(16px, calc((100% - var(--col)) / 2));
+    bottom: calc(186px + env(safe-area-inset-bottom)); /* 随页脚实际高度：158px+话术批覆盖公告一行19px+9px 间隙（2026-10-16 调） */
+    width: 36px; height: 36px; border-radius: 50%;
+    border: 1px solid var(--line-strong); background: var(--surface);
+    color: var(--ink-2); cursor: pointer; display: none; place-items: center;
+    box-shadow: var(--shadow-pop); z-index: 6; padding: 0;
+  }
+  .jump.show { display: grid; }
+  .jump svg { width: 16px; height: 16px; }
+  /* 窄屏徽章带竖排页脚增高至 207px，浮钮偏移同步上移（临界实测 520-560px 之间） */
+  @media (max-width: 540px) {
+    .jump { bottom: calc(216px + env(safe-area-inset-bottom)); }
+  }
+  /* 流式中发送钮变停止：中性描边样式，语义降饱和 */
+  .row button.send.stop {
+    background: var(--surface); color: var(--ink-2); border: 1px solid var(--line-strong);
+  }
+  @media (hover: hover) {
+    header .iconbtn:hover { background: var(--g-100); color: var(--ink); }
+    header .clear:hover, header .logout:hover { background: var(--g-100); color: var(--ink); }
+    .codebar button:hover, .row button.send:not(.stop):not(:disabled):hover { background: var(--accent-hover); }
+    .chip:hover { border-color: var(--focus); color: var(--accent-ink); background: var(--surface-2); }
+    .jump:hover { color: var(--accent-ink); border-color: var(--focus); }
+    .row button.send.stop:hover { border-color: var(--focus); color: var(--accent-ink); }
+    .icp a:hover { border-color: var(--focus); }
+  }
+
+  /* ============ Markdown 渲染样式（仅 AI 文档流；错误消息保持纯文本 pre-wrap） ============ */
+  .msg.bot .txt > :last-child { margin-bottom: 0; }
+  .msg.bot .txt p { margin: 0 0 10px; }
+  .msg.bot .txt h2, .msg.bot .txt h3, .msg.bot .txt h4, .msg.bot .txt h5 {
+    font-weight: 600; line-height: 1.4; margin: 18px 0 8px;
+  }
+  .msg.bot .txt h2 { font-size: var(--fs-20); }
+  .msg.bot .txt h3 { font-size: var(--fs-17); }
+  .msg.bot .txt h4, .msg.bot .txt h5 { font-size: var(--fs-15); }
+  .msg.bot .txt ul, .msg.bot .txt ol { margin: 0 0 10px; padding-left: 1.5em; }
+  .msg.bot .txt li { margin: 3px 0; }
+  .msg.bot .txt blockquote {
+    border-left: 3px solid var(--line-strong); color: var(--ink-2);
+    padding: 2px 0 2px 12px; margin: 0 0 10px;
+  }
+  .msg.bot .txt code {
+    font-family: var(--font-mono); font-size: .9em;
+    background: var(--g-100); border-radius: 4px; padding: 1px 5px;
+  }
+  .msg.bot .txt a { color: var(--accent-ink); text-decoration: underline; text-underline-offset: 2px; }
+  .msg.bot .txt hr { border: none; border-top: 1px solid var(--line); margin: 16px 0; }
+  .msg.bot .txt .codeblock {
+    margin: 0 0 12px; border: 1px solid var(--line); border-radius: var(--r-2);
+    background: var(--surface); overflow: hidden;
+  }
+  .msg.bot .txt .cb-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 4px 6px 4px 12px; border-bottom: 1px solid var(--line); background: var(--surface-2);
+  }
+  .msg.bot .txt .cb-lang {
+    font-family: var(--font-mono); font-size: 11px; color: var(--ink-3); letter-spacing: .5px;
+  }
+  .msg.bot .txt .cb-copy {
+    border: none; background: none; color: var(--ink-2); font-size: var(--fs-12);
+    cursor: pointer; padding: 3px 8px; border-radius: var(--r-1);
+  }
+  .msg.bot .txt .codeblock pre { margin: 0; padding: 10px 12px; overflow-x: auto; }
+  .msg.bot .txt .codeblock pre code {
+    font-family: var(--font-mono); font-size: 13px; line-height: 1.6;
+    background: none; padding: 0; display: block; white-space: pre;
+  }
+  .msg.bot .txt .tablewrap { overflow-x: auto; margin: 0 0 12px; }
+  .msg.bot .txt table { border-collapse: collapse; font-size: var(--fs-15); }
+  .msg.bot .txt th, .msg.bot .txt td {
+    border: 1px solid var(--line-strong); padding: 6px 10px; text-align: left;
+  } /* 亮色下 --line 在浅底上几乎不可见，表格线用深一档 */
+  .msg.bot .txt th { background: var(--surface-2); font-weight: 600; }
+  .msg.bot .txt td { font-variant-numeric: tabular-nums; }
+
+  /* 出处条：技术标识符用等宽药丸 chip + 表格数字；折叠/展开逻辑沿用 */
+  .srcs { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line);
+          font-size: var(--fs-12); line-height: 1.6; color: var(--ink-3); white-space: normal; }
+  .srcs .srcs-it {
+    display: inline-block; font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+    font-size: var(--fs-12); background: var(--surface-2); border: 1px solid var(--line);
+    border-radius: 999px; padding: 1px 8px; margin: 3px 6px 3px 0; overflow-wrap: anywhere;
+  } /* 长规范号/条号在窄屏不撑破版心 */
+  .srcs.closed .srcs-list .srcs-it:nth-child(n+3) { display: none; } /* 默认只露前 2 条 */
+  .srcs .srcs-x { display: inline-block; border: none; background: none; color: var(--ink-2);
+          font-size: var(--fs-12); line-height: 1.6; cursor: pointer; padding: 4px 6px; margin-left: 0;
+          text-decoration: underline dotted; } /* 扩点击热区：移动端拇指可达 */
+  /* 深度批A（2026-09-22）：引文核实总标 chip（出处条头部）与逐源徽标（源行尾）。
+     类名 v-* / l-* 只由前端 verdict/label 枚举白名单产生（非枚举不渲染），无注入面 */
+  .srcs .srcs-cc-all, .srcs .srcs-cc, .srcs .srcs-gate {
+    display: inline-block; font-size: 11px; line-height: 1.6; border-radius: 999px;
+    padding: 0 7px; border: 1px solid var(--line-strong); color: var(--ink-2);
+    background: var(--surface-2); vertical-align: middle; white-space: nowrap;
+  }
+  .srcs .srcs-cc-all { margin: 3px 6px 3px 0; }
+  .srcs .srcs-gate { margin: 3px 6px 3px 0; padding: 0 6px; background: none; }
+  .srcs .srcs-gate.g-ok { color: #2e9e63; border-color: #2e9e63; }
+  .srcs .srcs-gate.g-bad { color: var(--err); border-color: var(--err); }
+  .srcs .srcs-cc { margin-left: 5px; padding: 0 6px; background: none; }
+  .srcs .srcs-cc.v-supports { color: #2e9e63; border-color: #2e9e63; }
+  .srcs .srcs-cc.v-partial { color: #b8860b; border-color: #b8860b; }
+  .srcs .srcs-cc.v-unsupported { color: var(--err); border-color: var(--err); }
+</style>
+</head>
+<body>
+<header>
+  <span class="dot" id="statusDot" data-state="init"></span>
+  <span class="name" id="botName">AI 助手</span>
+  <button class="iconbtn" id="themeBtn" type="button" aria-label="切换深浅主题">
+    <svg class="ico-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    <svg class="ico-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+  </button>
+  <button class="logout" id="logoutBtn" type="button" style="display:none">登出</button>
+  <button class="clear" id="clearBtn" type="button">清空对话</button>
+</header>
+<main id="main"><div class="thread" id="thread"></div></main>
+<footer>
+  <div class="codebar" id="codebar">
+    <input id="codeInput" type="text" placeholder="请输入访问口令" autocomplete="off">
+    <button id="codeBtn" type="button">确定</button>
+  </div>
+  <div class="row">
+    <textarea id="input" rows="1" placeholder="输入你的问题…（Enter 发送）"></textarea>
+    <button class="send" id="sendBtn" type="button">发送</button>
+  </div>
+  <div class="disclaimer">内容由 AI 生成，请注意甄别与核实重要信息</div>
+  <div class="disclaimer coverage">已收录：3GPP 标准/中国行标/设备商与运营商公开白皮书/学术教材/行业论坛精选（持续扩展）</div>
+  <div class="icp"><a href="https://beian.miit.gov.cn" target="_blank" rel="noopener noreferrer"><svg class="icp-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5l-8-3z"/><path d="M9 12l2 2 4-4"/></svg><span>湘ICP备2026043575号</span></a><a href="https://beian.mps.gov.cn/#/query/webSearch?code=43042102000151" target="_blank" rel="noopener noreferrer"><img class="icp-icon" src="/static/beian-police.png" alt="公安备案标识" width="24" height="24"><span>湘公网安备43042102000151号</span></a></div>
+</footer>
+<button class="jump" id="jumpBtn" type="button" aria-label="回到底部">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+</button>
+<script>
+(function () {
+  var main = document.getElementById('main');
+  var thread = document.getElementById('thread');
+  var input = document.getElementById('input');
+  var sendBtn = document.getElementById('sendBtn');
+  var clearBtn = document.getElementById('clearBtn');
+  var codebar = document.getElementById('codebar');
+  var codeInput = document.getElementById('codeInput');
+  var codeBtn = document.getElementById('codeBtn');
+  var botName = document.getElementById('botName');
+  var statusDot = document.getElementById('statusDot');
+  var themeBtn = document.getElementById('themeBtn');
+  var jumpBtn = document.getElementById('jumpBtn');
+  var logoutBtn = document.getElementById('logoutBtn');
+  var streaming = false;
+  var ctrl = null;      // 流式请求的 AbortController（停止生成用）
+  var stick = true;     // 贴底滚动：用户上滑即停跟随，滚回底部恢复
+  var KEY_MSGS = 'qabot_msgs', KEY_CODE = 'qabot_code', KEY_THEME = 'qabot_theme',
+      KEY_AUTH = 'qabot_auth';
+  var msgs = [];
+  var code = '';        // 仅暂存待上送 /api/login 的口令（URL ?code= 或口令栏输入），不再落 localStorage
+  var authed = false;   // 登录态（服务端 qabot_session cookie 承担凭据；qabot_auth='1' 只是纯 UI 标志）
+  var botLabel = 'AI 助手'; // AI 消息的角色标签（健康检查回填后随 bot_name 更新）
+
+  // 受限 webview（如沙箱 iframe/禁存储环境）访问 localStorage 会抛 SecurityError，统一兜底
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function lsDel(k) { try { localStorage.removeItem(k); } catch (e) {} }
+
+  // 主题切换：显式选择记忆优先于系统偏好；同步浏览器外壳色（theme-color meta）
+  function applyTheme(t) {
+    document.documentElement.dataset.theme = t;
+    var m = document.querySelector('meta[name="theme-color"]');
+    if (m) m.content = (t === 'dark') ? '#1e1e1e' : '#ffffff';
+  }
+  themeBtn.addEventListener('click', function () {
+    var next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    applyTheme(next);
+    lsSet(KEY_THEME, next);
+  });
+
+  function esc(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+  // 出处条：sources 来自服务端 SSE {"sources":[{doc_id,version,locator,score},...]}，
+  // 随消息存入本地历史；旧历史无 sources 字段时返回空串、渲染不受影响
+  var SRC_MAXSHOW = 2; // 超出折叠为 +N 展开
+  // 深度批A（2026-09-22）：citation_check 枚举白名单映射（服务端 SSE
+  // {"type":"citation_check",overall,per_source:[{doc_id,verdict}]}）；
+  // 非枚举值一律不渲染=注入面归零，文案为前端常量、不进 HTML 属性
+  var CC_VERDICT = { supports: '支持', partial: '部分', unsupported: '不支持', not_relevant: '不相关' };
+  var CC_LABEL = { grounded: '引文有据', partial: '引文部分有据', inferred: '引文含推断' };
+  // evidence_insufficient 注意条（复用 offtopic 提示位）：reason 缺失时的兜底文案
+  var INSUFF_HEAD = '语料可能不足：';
+  var INSUFF_FALLBACK = '本题涉及精确数值/参数取值，检索语料未必充分覆盖，请以官方原文为准并建议人工复核。';
+  function srcText(s) {
+    return [s.doc_id, s.version, s.locator].filter(function (x) { return x; }).join(' ');
+  }
+  function srcsHtml(m) {
+    if (m.role !== 'assistant' || !Array.isArray(m.sources) || !m.sources.length) return '';
+    // 批A：逐源徽标按 doc_id 顺序消耗匹配（同 doc_id 多源时先配先得）；
+    // per_source 里的孤儿 doc_id（无对应源行）自然不渲染
+    var ccList = (m.cc && Array.isArray(m.cc.per_source)) ? m.cc.per_source.slice() : [];
+    function verdictFor(docId) {
+      for (var i = 0; i < ccList.length; i++) {
+        var e = ccList[i];
+        if (e && typeof e === 'object' && e.doc_id === docId && CC_VERDICT[e.verdict]) {
+          ccList.splice(i, 1);
+          return e.verdict; // 已白名单校验：可安全拼进 class 名
+        }
+      }
+      return null;
+    }
+    var items = [];
+    m.sources.forEach(function (s) {
+      if (s && typeof s === 'object') {
+        var t = srcText(s);
+        if (t) {
+          var v = verdictFor(s.doc_id);
+          items.push('<span class="srcs-it">' + esc(t)
+            + (v ? '<span class="srcs-cc v-' + v + '">' + CC_VERDICT[v] + '</span>' : '')
+            + '</span>');
+        }
+      }
+    });
+    if (!items.length) return '';
+    var more = items.length - SRC_MAXSHOW;
+    var head = '<span class="srcs-t">出处：</span>';
+    if (m.cc && CC_LABEL[m.cc.overall]) { // 总标 chip（overall 白名单外不渲染）
+      head += '<span class="srcs-cc-all l-' + m.cc.overall + '">' + CC_LABEL[m.cc.overall] + '</span>';
+    }
+    if (m.cgate && typeof m.cgate.ok === 'boolean') { // 程序闸核验 chip（纯程序值）
+      head += '<span class="srcs-gate ' + (m.cgate.ok ? 'g-ok' : 'g-bad') + '">'
+            + (m.cgate.ok ? '引用核验✓' : '引用核验：' + m.cgate.hard + ' 处不符')
+            + '</span>';
+    }
+    return '<div class="srcs' + (more > 0 ? ' closed' : '') + '">' + head
+         + '<span class="srcs-list">' + items.join('') + '</span>'
+         + (more > 0 ? '<button class="srcs-x" type="button" data-more="' + more + '">+' + more + '</button>' : '')
+         + '</div>';
+  }
+
+  /* ============ Markdown 安全渲染（仅 AI 消息展示层；msgs[].content 永存原始文本） ============
+     纪律：任何文本先 esc() 全量转义、再做白名单结构转换，杜绝注入；
+     链接仅放行 http(s) 且引号转百分号编码，防属性逃逸。 */
+  function inline(s) {
+    var codes = [];
+    var e = esc(s).replace(/`([^`]+)`/g, function (m, c) {
+      codes.push('<code>' + c + '</code>');
+      return '\u0001' + (codes.length - 1) + '\u0001'; // 占位：护住行内码不被加粗斜体再加工
+    });
+    e = e.replace(/\[([^\]]+)\]\((https?:[^\s)]+)\)/g, function (m, txt, url) {
+      return '<a href="' + url.replace(/"/g, '%22') + '" target="_blank" rel="noopener noreferrer">' + txt + '</a>';
+    });
+    e = e.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    e = e.replace(/(^|[^*\w])\*([^*\s][^*]*?)\*/g, '$1<em>$2</em>');
+    e = e.replace(/\u0001(\d+)\u0001/g, function (m, i) { return codes[+i]; });
+    return e;
+  }
+  function mdToHtml(src) {
+    var lines = String(src).split('\n');
+    var out = [], paras = [], i = 0;
+    function flushPara() {
+      if (!paras.length) return;
+      out.push('<p>' + paras.map(inline).join('<br>') + '</p>');
+      paras = [];
+    }
+    function cellsOf(row) {
+      return row.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map(function (c) { return c.trim(); });
+    }
+    while (i < lines.length) {
+      var line = lines[i];
+      var fence = line.match(/^```([\w-]*)\s*$/);
+      if (fence) { // 围栏代码块（流式尾块未闭合时按到末尾处理）
+        flushPara();
+        var buf = [];
+        i++;
+        while (i < lines.length && !/^```\s*$/.test(lines[i])) { buf.push(lines[i]); i++; }
+        if (i < lines.length) i++; // 跳过闭合围栏
+        out.push('<div class="codeblock"><div class="cb-bar"><span class="cb-lang">'
+          + esc(fence[1] || 'text') + '</span>'
+          + '<button class="cb-copy" type="button">复制</button></div>'
+          + '<pre><code>' + esc(buf.join('\n')) + '</code></pre></div>');
+        continue;
+      }
+      var h = line.match(/^(#{1,4})\s+(.*)$/);
+      if (h) { // 标题降一级映射（# → h2），不与页面级标题争位
+        flushPara();
+        var lv = Math.min(h[1].length + 1, 5);
+        out.push('<h' + lv + '>' + inline(h[2]) + '</h' + lv + '>');
+        i++; continue;
+      }
+      if (/^\s*(-{3,}|\*{3,})\s*$/.test(line)) { flushPara(); out.push('<hr>'); i++; continue; }
+      if (/^>\s?/.test(line)) { // 引用块
+        flushPara();
+        var q = [];
+        while (i < lines.length && /^>\s?/.test(lines[i])) { q.push(lines[i].replace(/^>\s?/, '')); i++; }
+        out.push('<blockquote>' + q.map(inline).join('<br>') + '</blockquote>');
+        continue;
+      }
+      if (line.indexOf('|') !== -1 && i + 1 < lines.length &&
+          /^\s*\|?[\s:|-]+\|[\s:|-]*$/.test(lines[i + 1]) && lines[i + 1].indexOf('-') !== -1) { // GFM 表格
+        flushPara();
+        var head = cellsOf(line);
+        i += 2;
+        var rows = [];
+        while (i < lines.length && lines[i].indexOf('|') !== -1 && lines[i].trim() !== '') {
+          rows.push(cellsOf(lines[i])); i++;
+        }
+        var t = '<div class="tablewrap"><table><thead><tr>';
+        head.forEach(function (c) { t += '<th>' + inline(c) + '</th>'; });
+        t += '</tr></thead><tbody>';
+        rows.forEach(function (r) {
+          t += '<tr>';
+          for (var c2 = 0; c2 < head.length; c2++) t += '<td>' + inline(r[c2] || '') + '</td>';
+          t += '</tr>';
+        });
+        out.push(t + '</tbody></table></div>');
+        continue;
+      }
+      var ul = line.match(/^\s*[-*]\s+(.*)$/);
+      var ol = line.match(/^\s*\d+[.、)]\s+(.*)$/);
+      if (ul || ol) { // 列表（同类连续项归并；异类即断开）
+        flushPara();
+        var tag = ul ? 'ul' : 'ol';
+        var re = ul ? /^\s*[-*]\s+(.*)$/ : /^\s*\d+[.、)]\s+(.*)$/;
+        out.push('<' + tag + '>');
+        while (i < lines.length) {
+          var m2 = lines[i].match(re);
+          if (!m2) break;
+          out.push('<li>' + inline(m2[1]) + '</li>');
+          i++;
+        }
+        out.push('</' + tag + '>');
+        continue;
+      }
+      if (line.trim() === '') { flushPara(); i++; continue; }
+      paras.push(line);
+      i++;
+    }
+    flushPara();
+    return out.join('');
+  }
+  function render() {
+    var html = '';
+    if (!msgs.length) {
+      html = '<div class="hint">你好！我是你的 AI 问答助手，有什么想问的尽管说。</div>'
+           + '<div class="chips">'
+           + '<button class="chip" type="button">这份规范适用于哪些场景？</button>'
+           + '<button class="chip" type="button">主要条款有什么要求？</button>'
+           + '<button class="chip" type="button">和上一版相比有什么变化？</button>'
+           + '</div>';
+    }
+    msgs.forEach(function (m) {
+      if (m.role === 'user') {
+        html += '<div class="msg user">' + esc(m.content) + '</div>';
+      } else {
+        html += '<div class="msg bot' + (m.error ? ' err' : '') + '">'
+              + (m.error ? '' : '<div class="role">' + esc(botLabel) + '</div>')
+              + (m.offTopic && !m.error
+                 ? '<div class="offtopic' + (m.otNote ? ' withnote' : '') + '">本次未命中语料，回答为通用模型输出</div>'
+                   + (m.otNote ? '<div class="offtopic note">' + esc(m.otNote) + '</div>' : '')
+                 : '')
+              + (m.evInsufficient && !m.error ? '<div class="offtopic">'
+                 + esc(INSUFF_HEAD + (m.evReason || INSUFF_FALLBACK)) + '</div>' : '')
+              + (m.insightGap && !m.error ? '<div class="offtopic">'
+                 + esc(m.insightGap) + '</div>' : '')
+              + '<div class="txt">' + (m.error ? esc(m.content) : mdToHtml(m.content)) + '</div>'
+              + srcsHtml(m) + '</div>';
+      }
+    });
+    thread.innerHTML = html;
+    thread.className = msgs.length ? 'thread' : 'thread empty';
+    if (stick) main.scrollTop = main.scrollHeight;
+  }
+  function save() { lsSet(KEY_MSGS, JSON.stringify(msgs)); }
+  function askCode(ph) {
+    codebar.classList.add('show');
+    if (ph) codeInput.placeholder = ph; // 场景化文案（会话过期/需重新登录），缺省用原占位
+    codeInput.focus();
+  }
+  function setAuthed(v) {
+    authed = v;
+    logoutBtn.style.display = v ? '' : 'none';
+    if (v) lsSet(KEY_AUTH, '1'); else lsDel(KEY_AUTH);
+  }
+  function loginFail(info) {
+    // 口令栏保持展开：清输入+红边+占位提示（口令本身绝不回显、不落任何存储）
+    code = '';
+    lsDel(KEY_CODE); // 残留的旧明文口令一并出清（登录失败=不可信）
+    codebar.classList.add('show');
+    codeInput.value = '';
+    codeInput.style.borderColor = 'var(--err)';
+    var ph = '登录失败，请重试';
+    if (info && info.error === 'bad_passcode') ph = '口令不正确，请重新输入';
+    else if (info && info.error === 'too_many_attempts') {
+      // 登录限速（429：/api/login 同 IP 错 5 次锁 10 分钟）：秒数动态文案优先，
+      // 缺 retry_after_s 时退后端 message，再退静态兜底
+      var wait = Number(info.retry_after_s);
+      ph = isFinite(wait) && wait > 0
+        ? '尝试次数过多，请 ' + Math.ceil(wait) + ' 秒后再试'
+        : (info.message || '尝试次数过多，请稍后再试');
+    }
+    codeInput.placeholder = ph;
+    setTimeout(function () { codeInput.style.borderColor = ''; codeInput.focus(); }, 100);
+  }
+  function attemptLogin(pc) {
+    pc = String(pc || '').trim();
+    if (!pc) return;
+    fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ passcode: pc })
+    }).then(function (r) {
+      return r.json().then(function (j) { return { ok: r.ok, j: j }; });
+    }).then(function (res) {
+      if (res.ok && res.j && res.j.ok) {
+        code = '';
+        lsDel(KEY_CODE);        // 明文口令即刻出清（兼容旧键名也在）
+        setAuthed(true);
+        codebar.classList.remove('show');
+        codeInput.placeholder = '请输入访问口令';
+        checkHealth();          // 登录后重查健康：cookie 会话换完整字段（bot_name 等）
+      } else {
+        loginFail(res.j);
+      }
+    }).catch(function () { loginFail(null); });
+  }
+  function grow() {
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+  }
+
+  // 1) 先绑定监听，再做其余初始化：后续任何一步异常都不能让触发链路缺席
+  input.addEventListener('input', grow);
+  input.addEventListener('keydown', function (e) {
+    var isEnter = e.key === 'Enter' || (!e.key && e.keyCode === 13);
+    if (isEnter && !e.shiftKey && !e.isComposing) { e.preventDefault(); send(); }
+  });
+  sendBtn.addEventListener('click', function () {
+    if (streaming) { if (ctrl) ctrl.abort(); } // 流式中=停止生成
+    else send();
+  });
+  // 贴底滚动纪律：滚动位置变化时判定是否脱离底部，脱离则亮回底浮钮
+  function atBottom() { return main.scrollHeight - main.scrollTop - main.clientHeight < 48; }
+  main.addEventListener('scroll', function () {
+    stick = atBottom();
+    jumpBtn.classList.toggle('show', !stick);
+  });
+  jumpBtn.addEventListener('click', function () {
+    main.scrollTop = main.scrollHeight; // 瞬时回底：流式中内容仍在增长，平滑滚动会追不上落点
+  });
+  // 触屏设备把"Enter 发送"提示换成中性文案（软键盘无 Enter 语义）
+  try { if (matchMedia('(hover: none)').matches) input.placeholder = '输入你的问题…'; } catch (e) {}
+  clearBtn.addEventListener('click', function () {
+    if (!confirm('确定清空当前对话？')) return;
+    msgs = []; save(); render();
+  });
+  codeBtn.addEventListener('click', function () {
+    var pc = codeInput.value.trim();
+    if (!pc) return;
+    attemptLogin(pc); // 口令只上送 /api/login 换 HttpOnly cookie，不再落 localStorage
+  });
+  codeInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') { e.preventDefault(); codeBtn.click(); }
+  });
+  // 登出（批2）：删服务端会话行+清 cookie；本地对话保留（qabot_msgs 不动，
+  // 重新登录后历史仍在；要清空点"清空对话"），登出按钮随登录态显隐
+  logoutBtn.addEventListener('click', function () {
+    fetch('/api/logout', { method: 'POST' })
+      .then(function () {}, function () {})
+      .then(function () {
+        setAuthed(false);
+        code = '';
+        input.focus();
+      });
+  });
+  // 出处条 +N/收起、空状态建议 chip、代码块复制（事件委托：render() 会整树重建，逐条绑定会失效）
+  function copyText(t, btn) {
+    var done = function () {
+      btn.textContent = '已复制';
+      setTimeout(function () { btn.textContent = '复制'; }, 1200);
+    };
+    function fallback() { // 非安全上下文（如局域网 http）无 clipboard API 时的兜底
+      var ta = document.createElement('textarea');
+      ta.value = t;
+      ta.style.cssText = 'position:fixed;opacity:0;pointer-events:none';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); done(); } catch (e) {}
+      document.body.removeChild(ta);
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(t).then(done, fallback);
+    } else fallback();
+  }
+  main.addEventListener('click', function (e) {
+    var el = e.target;
+    while (el && el !== main) {
+      if (el.classList && el.classList.contains('cb-copy')) {
+        var block = el.parentNode ? el.parentNode.parentNode : null;
+        var code = block ? block.querySelector('pre code') : null;
+        if (code) copyText(code.textContent, el);
+        return;
+      }
+      if (el.classList && el.classList.contains('chip')) {
+        input.value = el.textContent.trim(); grow(); input.focus();
+        return;
+      }
+      if (el.classList && el.classList.contains('srcs-x')) {
+        var box = el.parentNode && el.parentNode.classList && el.parentNode.classList.contains('srcs') ? el.parentNode : null;
+        if (box) {
+          var closed = box.classList.toggle('closed');
+          el.textContent = closed ? '+' + el.getAttribute('data-more') : '收起';
+        }
+        return;
+      }
+      el = el.parentNode;
+    }
+  });
+  document.body.setAttribute('data-ready', '1'); // DOM 快照据此判断脚本初始化是否成功
+
+  // 2) 恢复历史与登录态（批2：凭据=服务端 qabot_session cookie；?code= 打开即
+  //    自动换会话，localStorage 不再存明文口令——qabot_auth='1' 只是纯 UI 标志），逐项兜底
+  try { msgs = JSON.parse(lsGet(KEY_MSGS) || '[]'); } catch (e) { msgs = []; }
+  if (!Array.isArray(msgs)) msgs = [];
+  msgs = msgs.filter(function (m) { return m && typeof m.content === 'string' && m.content; });
+  msgs.forEach(function (m) { delete m.pending; }); // 清除断流/断电遗留的 pending 标记
+  setAuthed(lsGet(KEY_AUTH) === '1');
+  var urlCode = null;
+  try { urlCode = new URLSearchParams(location.search).get('code'); } catch (e) {}
+  if (urlCode) {
+    // ?code= 兼容：立即 POST /api/login 换 cookie；成功后清 URL 参数（防进
+    // 浏览器历史/服务端访问日志），qabot_code 明文键登录成功即删
+    try { history.replaceState(null, '', location.pathname); } catch (e) {}
+    attemptLogin(urlCode);
+  } else {
+    var legacyCode = lsGet(KEY_CODE); // 旧版存量明文口令：自动换 cookie 后即删（无感升级）
+    if (legacyCode) attemptLogin(legacyCode);
+  }
+
+  // 3) 渲染与健康检查：各自兜底，不影响已绑定的监听
+  // 健康检查分级（2026-09-21 批1；批2 扩登录态）：已存口令或已登录（authed，
+  // cookie 承担凭据）则 POST 换完整字段（bot_name/has_key）；GET 只回 {ok:true}
+  // ——口令绝不经 URL 传递（防落入访问日志）。两者皆无时状态灯按 ok 判活
+  // （has_key 不可见=未知不判死），bot_name 待口令/登录补查后回填。
+  function checkHealth() {
+    var usePost = !!code || authed; // 双轨：暂存口令 POST 上送；已登录 POST 空口令（cookie 承担凭据换完整字段）
+    var req = usePost
+      ? fetch('/api/health', { method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ passcode: code }) })
+      : fetch('/api/health');
+    try {
+      req.then(function (r) { return r.json(); })
+        .then(function (h) {
+          if (h && h.bot_name) { botName.textContent = h.bot_name; document.title = h.bot_name; botLabel = h.bot_name; }
+          statusDot.dataset.state = (h && h.ok && h.has_key !== false) ? 'ok' : 'down';
+        }).catch(function () { statusDot.dataset.state = 'down'; });
+    } catch (e) { statusDot.dataset.state = 'down'; }
+  }
+  render();
+  checkHealth();
+
+  async function send() {
+    var text = input.value.trim();
+    if (!text || streaming) return;
+    if (!code && !authed) { askCode(); return; } // 凭据=服务端 cookie（authed）或暂存口令（code，双轨兼容）
+    streaming = true;
+    sendBtn.textContent = '停止';
+    sendBtn.classList.add('stop');
+    var bubble = null;
+    var waitTimer = null; // 首_delta 前 2 秒起换"正在检索语料…"文案（等待分级）
+    function clearWait() { if (waitTimer) { clearTimeout(waitTimer); waitTimer = null; } }
+    try {
+      input.value = ''; grow();
+      msgs.push({ role: 'user', content: text });
+      msgs.push({ role: 'assistant', content: '', pending: true });
+      save(); render();
+      stick = true; // 用户刚提交新问题，恢复贴底跟随
+      bubble = main.querySelector('.msg:last-child .txt');
+      bubble.classList.add('waiting');
+      waitTimer = setTimeout(function () {
+        if (bubble) bubble.classList.add('waitlong');
+      }, 2000);
+
+      ctrl = new AbortController();
+      var resp = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: ctrl.signal,
+        body: JSON.stringify({
+          passcode: code,
+          messages: msgs.filter(function (m) { return !m.error && !m.pending && m.content; })
+                        .map(function (m) { return { role: m.role, content: m.content }; })
+        })
+      });
+      if (!resp.ok) {
+        var info = {};
+        try { info = await resp.json(); } catch (e) {}
+        if (info.error === 'bad_passcode') { bubble.textContent = '访问口令不正确，请重新输入。'; }
+        else if (info.error === 'auth_expired') { bubble.textContent = '会话已过期，请重新输入口令。'; }
+        else if (info.error === 'login_required') { bubble.textContent = '请重新登录后再提问。'; }
+        else if (info.error === 'rate_limited') { bubble.textContent = '提问太频繁啦，请稍等一分钟再试。'; }
+        else if (info.error === 'input_too_long') { bubble.textContent = '对话太长了，请点击"清空对话"后重新开始。'; }
+        else { bubble.textContent = '服务暂时不可用（' + (info.error || resp.status) + '），请稍后再试。'; }
+        msgs[msgs.length - 1].content = bubble.textContent;
+        msgs[msgs.length - 1].error = true;
+        save();
+        finish();
+        if (info.error === 'bad_passcode') askCode(); // finish 后再弹口令栏，焦点落在口令输入框
+        else if (info.error === 'auth_expired') { // 会话失效：撤 UI 登录态+弹口令栏（批2 §4）
+          setAuthed(false);
+          askCode('会话已过期，请重新输入');
+        } else if (info.error === 'login_required') {
+          setAuthed(false);
+          askCode('请重新登录');
+        }
+        return;
+      }
+      var reader = resp.body.getReader();
+      var decoder = new TextDecoder();
+      var buf = '', last = msgs.length - 1, got = false, otShown = false, insShown = false, gapShown = false;
+      function handle(part) {
+        if (part.indexOf('data:') !== 0) return;
+        var ev;
+        try { ev = JSON.parse(part.slice(5).trim()); } catch (e) { return; }
+        if (ev.error) {
+          clearWait();
+          bubble.classList.remove('waiting');
+          bubble.textContent += (got ? '\n' : '') + '（出错了：' + (ev.error === 'upstream_timeout' ? '上游响应超时' : '上游服务异常') + '，请重试）';
+          msgs[last].content = bubble.textContent; msgs[last].error = true; got = true;
+        } else if (ev.sources) {
+          // 检索出处事件（流式正文之前到达）：随消息存本地历史，render() 时挂出处条
+          if (Array.isArray(ev.sources)) msgs[last].sources = ev.sources;
+        } else if (ev.type === 'off_topic') {
+          // 低分未命中语料（流式正文之前到达）：不出出处条（服务端本就不发
+          // sources），气泡顶部加一行提示；随消息存本地历史供 render() 复现。
+          // 话术批（2026-10-16）：可选 note=按缺失主题的渠道引导，随消息存
+          // otNote 供 render() 复现（esc 转义+截长 200，mXSS 纪律同
+          // insight_gap note 先例）；旧事件无 note 字段=零第二行，向后兼容
+          if (!otShown) {
+            otShown = true;
+            msgs[last].offTopic = true;
+            var on = (typeof ev.note === 'string') ? ev.note.slice(0, 200) : '';
+            if (on) msgs[last].otNote = on;
+            bubble.insertAdjacentHTML('beforebegin',
+              '<div class="offtopic' + (on ? ' withnote' : '') + '">本次未命中语料，回答为通用模型输出</div>'
+              + (on ? '<div class="offtopic note">' + esc(on) + '</div>' : ''));
+          }
+        } else if (ev.type === 'evidence_insufficient') {
+          // 批A A2（sources 之前到达）：高危面题证据不足注意条，复用 offtopic
+          // 提示位；reason 属服务端内容，一律 esc() 转义（mXSS 纪律）并截长
+          if (!insShown) {
+            insShown = true;
+            msgs[last].evInsufficient = true;
+            msgs[last].evReason = (typeof ev.reason === 'string') ? ev.reason.slice(0, 200) : '';
+            bubble.insertAdjacentHTML('beforebegin',
+              '<div class="offtopic">' + esc(INSUFF_HEAD + (msgs[last].evReason || INSUFF_FALLBACK)) + '</div>');
+          }
+        } else if (ev.type === 'insight_gap') {
+          // 意图缺口批甲（sources 之前到达）：通识标注条，复用 offtopic 提示位；
+          // note 属服务端内容，一律 esc() 转义（mXSS 纪律）并截长 200；一次性
+          if (!gapShown) {
+            gapShown = true;
+            var gn = (typeof ev.note === 'string') ? ev.note.slice(0, 200) : '';
+            if (gn) {
+              msgs[last].insightGap = gn;
+              bubble.insertAdjacentHTML('beforebegin',
+                '<div class="offtopic">' + esc(gn) + '</div>');
+            }
+          }
+        } else if (ev.type === 'citation_check') {
+          // 批A A1（done 之前到达）：随消息存本地历史，srcsHtml() 白名单渲染
+          // 徽标与总标 chip（非枚举值不落地，注入面归零）
+          if (ev && typeof ev.overall === 'string' && Array.isArray(ev.per_source)) {
+            msgs[last].cc = { overall: ev.overall, per_source: ev.per_source };
+          }
+        } else if (ev.type === 'citation_gate') {
+          // 引用程序闸（done 之前到达，2026-10-01 前端化）：程序核验结果随消息
+          // 存本地历史，srcsHtml() 渲染核验 chip；只收 bool/数值（零注入面），
+          // 非法形态不落地
+          if (ev && typeof ev.ok === 'boolean') {
+            msgs[last].cgate = { ok: ev.ok, hard: +ev.hard || 0, cites: +ev.cites || 0 };
+          }
+        } else if (ev.delta) {
+          if (!got) { clearWait(); bubble.classList.remove('waiting'); bubble.classList.add('typing'); }
+          msgs[last].content += ev.delta; got = true;
+          bubble.innerHTML = mdToHtml(msgs[last].content); // 流式期间单气泡整建重渲染（KB 级文本无压力）
+        }
+      }
+      while (true) {
+        var r = await reader.read();
+        if (r.done) break;
+        buf += decoder.decode(r.value, { stream: true });
+        var parts = buf.split('\n\n');
+        buf = parts.pop();
+        for (var i = 0; i < parts.length; i++) handle(parts[i]);
+        if (stick) main.scrollTop = main.scrollHeight; // 上滑脱离底部时不硬拽
+      }
+      buf += decoder.decode(); // 冲刷跨 chunk 的多字节残余
+      if (buf) handle(buf);    // 兜底：末尾事件可能没有 \n\n 终止
+      if (!got && !msgs[last].error) {
+        msgs[last].content = '（本轮没有返回内容，请重试）'; msgs[last].error = true;
+      }
+      delete msgs[last].pending;
+      save();
+    } catch (e) {
+      if (e && e.name === 'AbortError') {
+        // 用户主动停止：保留已生成部分、不标记错误；一字未出则给中性占位
+        var am = msgs[msgs.length - 1];
+        if (am) {
+          delete am.pending;
+          if (!am.content) am.content = '（已停止生成）';
+        }
+        save();
+      } else {
+        var em = '网络异常，请检查网络后重试。';
+        if (bubble) bubble.textContent = em;
+        var m = msgs[msgs.length - 1];
+        if (m) { m.content = em; m.error = true; }
+        save();
+      }
+    }
+    finish();
+    function finish() {
+      clearWait();
+      if (bubble) bubble.classList.remove('typing', 'waiting', 'waitlong');
+      streaming = false; ctrl = null;
+      sendBtn.textContent = '发送'; sendBtn.classList.remove('stop');
+      input.focus();
+      render();
+    }
+  }
+})();
+</script>
+</body>
+</html>

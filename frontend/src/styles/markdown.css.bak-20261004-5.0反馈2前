@@ -1,0 +1,161 @@
+/* ============================================================
+   视觉 3.0 · T0.5 拆分（2026-10-04）
+   来源=base.css「Markdown 渲染样式」节（原 L343-403）+「批C」KaTeX
+   公式与 ASN.1 围栏着色（原 L508-528）。
+   纯搬运：零 token 改值、零 DOM 改动；文件内规则保持原 base.css 出现顺序；
+   :root[data-theme="dark"] 行内码覆写紧随其亮色本体之后（同文件保序）。
+   ============================================================ */
+/* ============================================================
+   视觉 3.0 · T3 施工（2026-10-04）：排版阅读面精雕
+   真源=运营/视觉3.0-20261004/基调稿与组件语言-3.0.md（冻结）；
+   拍板=断点三节31（基调稿采纳照稿施工）。本件改动面：
+   §3.2 标题阶梯 h2 呼吸升档+首个 h2 短线挂号（裁决 #17）；
+   §3.2 blockquote 编辑部款（裁决 #13）+首段装饰大引号（裁决 #14，
+   白名单 W2 衬线字盘全仓唯一消费点——5.0 已随衬线管线退役整块删除，
+   见下方 5.0 横幅）；
+   §3.2 hr 升档（裁决 #12）；§3.2 line-break:strict 立字（裁决 #30）；
+   §3.8 表格 booktabs 三线制整节替换（裁决 #8，基调稿成品 CSS 块逐字）。
+   行内码复核（§3.2/施工项6）：暗底修正走表面组 var(--surface-2)，与 T1
+   暗线改值（--line/--line-strong 线系）零冲突，复核结论=零改动。
+   ============================================================ */
+/* ============================================================
+   视觉 5.0 · T-c 施工（2026-10-04）：排印面换 token（减装饰不减可读性）
+   真源=运营/视觉5.0-现代极简-20261004/基调-5.0.md（§③材质终值）；
+   拍板=断点三节35＋决策/ADR-0017 决策⑤。本件改动面：
+   ①W2 首段装饰大引号（blockquote::before）整块删除——衬线管线退役
+     （T-a 删字盘 token 与字串常量文件），现代极简=减装饰；
+     blockquote 编辑部款本体（2px --rule-mid 左线）保留，伪元素不入
+     DOM 断言面，T-d 零同步项。
+   ②表格 th 实底去纸感颗粒（噪点 token 5.0 退役）：只删 background-image
+     一行，background-color: var(--bg) 实底保留（吸顶不穿帮约束不破）。
+   ③booktabs 三线制零新投资核对：toprule/bottomrule=--rule-heavy、
+     midrule=--rule-mid、行线=--line-strong 全 var 消费，无硬编码色。
+   ④代码面 --code-* 族零改；KaTeX/ASN.1 着色面零改（hl-str #6fce8e 为
+     恒深面绿档既有登记值，非橙族，维持）；排印阶梯（h2-h5/p/li/hr）
+     零改动。
+   ============================================================ */
+/* ============ Markdown 渲染样式（仅 AI 文档流；错误消息保持纯文本 pre-wrap） ============ */
+.msg.bot .txt > :last-child { margin-bottom: 0; }
+/* 3.0 §3.2 中文禁则立字（裁决 #30）：line-break:strict（浏览器默认多已如此，
+   立字为据）；word-break 既有兜底在 message.css .msg 不动 */
+.msg.bot .txt { line-break: strict; }
+.msg.bot .txt p { margin: 0 0 10px; }
+.msg.bot .txt h2, .msg.bot .txt h3, .msg.bot .txt h4, .msg.bot .txt h5 {
+  font-weight: 600; line-height: 1.4; margin: 18px 0 8px;
+}
+/* 3.0 §3.2 标题阶梯：h2 呼吸升档（上边距 18→24px、下边距 8→10px；h3/h4/h5 维持） */
+.msg.bot .txt h2 { font-size: var(--fs-20); margin: 24px 0 10px; }
+/* 3.0 §3.2 首个 h2 短线挂号（裁决 #17，A-3 缩窄采纳）：32×2px 中性线，限每条
+   消息首个 h2（长答案 4-6 节全挂号=超预算）；accent 变体禁（反例 10） */
+.msg.bot .txt h2:first-of-type::before {
+  content: ""; display: block; width: 32px; height: 2px;
+  background: var(--line-strong); margin-bottom: 8px;
+}
+.msg.bot .txt h3 { font-size: var(--fs-17); }
+.msg.bot .txt h4, .msg.bot .txt h5 { font-size: var(--fs-15); }
+.msg.bot .txt ul, .msg.bot .txt ol { margin: 0 0 10px; padding-left: 1.5em; }
+.msg.bot .txt li { margin: 3px 0; }
+/* 3.0 §3.2 blockquote 编辑部款（裁决 #13，C-3.1）：左线 3px --line-strong→
+   2px --rule-mid、padding-left 12→14px；文本色维持 ink-2 */
+.msg.bot .txt blockquote {
+  border-left: 2px solid var(--rule-mid); color: var(--ink-2);
+  padding: 2px 0 2px 14px; margin: 0 0 10px;
+}
+/* 5.0 T-c：3.0 裁决 #14「首段装饰大引号」（blockquote::before，衬线 W2 全仓
+   唯一消费点）整块删除——衬线字盘管线 5.0 退役（T-a 删 token 与字串常量文件），
+   现代极简=减装饰不减可读性；blockquote 编辑部款本体（下方 2px --rule-mid
+   左线+ink-2 文本）保留不动。伪元素无 DOM/文案足迹，回归断言面零波及。 */
+.msg.bot .txt code {
+  font-family: var(--font-mono); font-size: .9em;
+  background: var(--g-100); border-radius: 4px; padding: 1px 5px;
+}
+/* 行内码暗色修正（照 2.0 预览稿）：暗色下 --g-100 系亮灰浅底，
+   浅底配浅字不可读——换 surface-2 深底（1.0/批次0 遗留暗债，2.0 补） */
+:root[data-theme="dark"] .msg.bot .txt code { background: var(--surface-2); }
+.msg.bot .txt a { color: var(--accent-ink); text-decoration: underline; text-underline-offset: 2px; }
+/* 3.0 §3.2 hr 升档（裁决 #12，C-3.1）：--line→--rule-mid、上下边距 16→20px
+   （大段分界语义，仍 1px 不与表格粗线抢级） */
+.msg.bot .txt hr { border: none; border-top: 1px solid var(--rule-mid); margin: 20px 0; }
+/* ============ 代码块恒深面（2.0 §3.7 核心改动，冲突点 7 采纳） ============
+   双主题恒深：亮色主题下代码底也从 surface 白换 --code-bg 深底，头部条同深底、
+   分隔线 --code-line；暗色再压至 #0f1014 与基面区分。代码=独立物体的信号，
+   亮暗主题代码观感一致。亮暗套全走 --code-* token（暗色 token 层自动翻转）。 */
+.msg.bot .txt .codeblock {
+  margin: 0 0 12px; border: 1px solid var(--code-line); border-radius: var(--r-2);
+  background: var(--code-bg); overflow: hidden;
+}
+.msg.bot .txt .cb-bar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 4px 6px 4px 12px; border-bottom: 1px solid var(--code-line);
+}
+.msg.bot .txt .cb-lang {
+  font-family: var(--font-mono); font-size: var(--fs-11); color: var(--code-ink-dim); letter-spacing: .5px;
+}
+.msg.bot .txt .cb-copy {
+  border: none; background: none; color: var(--code-ink-dim); font-size: var(--fs-12);
+  cursor: pointer; padding: 3px 8px; border-radius: var(--r-1);
+}
+.msg.bot .txt .codeblock pre { margin: 0; padding: 10px 12px; overflow-x: auto; }
+.msg.bot .txt .codeblock pre code {
+  font-family: var(--font-mono); font-size: 13px; line-height: 1.6;
+  color: var(--code-ink); background: none; padding: 0; display: block; white-space: pre;
+}
+/* ============ 表格：3.0 §3.8 booktabs 三线制（裁决 #8；基调稿 §3.8 成品 CSS 块逐字替换 2.0 四侧细线表） ============
+   粗顶线 2px+表头中线 1px+粗底线 2px、无竖线（含删 :first-child/:last-child
+   左右竖线规则）、th 去底色换实底（bg+noise，吸顶不穿帮——排印件非色面件）；
+   行线降 --line-strong 档、斑马纹不采纳（裁决 #24，行线替代）；行 hover 仅
+   精确指针设备、瞬时无转场（裁决 #28，动效允许清单不扩）。 */
+.msg.bot .txt .tablewrap {
+  overflow-x: auto; overscroll-behavior-x: contain;
+  scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent;
+  margin: 4px 0 16px; /* 上 4px 与上文 p 的 10px 下边距合成 14px 呼吸；下 16px 给底线留白 */
+}
+.msg.bot .txt table {
+  border-collapse: separate; border-spacing: 0; /* 禁改 collapse：sticky th 边框滚丢（管线硬约束） */
+  font-size: var(--fs-15); line-height: 1.6;    /* 行高自正文 1.75 收紧一档（数据密度件） */
+}
+.msg.bot .txt th {
+  border-top: 2px solid var(--rule-heavy);   /* toprule 画在 th 上=随吸顶走，长表滚不丢 */
+  border-bottom: 1px solid var(--rule-mid);  /* midrule */
+  background-color: var(--bg);               /* 「无底色」的实底：吸顶时正文不穿帮（5.0 T-c：噪点颗粒退役，background-image 行删除，实底纯净） */
+  font-size: var(--fs-13); font-weight: 600; color: var(--ink);
+  letter-spacing: .02em; line-height: 1.4;
+  font-variant-numeric: tabular-nums;        /* 3.0 裁决 #21（tabular 收编+全域化）+预备审计 §四（T4 定夺=采纳）：数字表头与 td 数据列对齐（A-9） */
+  padding: 10px 12px 7px; text-align: left; position: sticky; top: 0;
+}
+.msg.bot .txt td {
+  border-bottom: 1px solid var(--line-strong); /* 行发丝线：比中线轻一档（web 适配） */
+  padding: 7px 12px; text-align: left; font-variant-numeric: tabular-nums;
+}
+.msg.bot .txt tbody tr:first-child td { padding-top: 10px; }      /* midrule 下呼吸 */
+.msg.bot .txt tbody tr:last-child td {
+  padding-bottom: 10px; border-bottom: 2px solid var(--rule-heavy); /* bottomrule */
+}
+.msg.bot .txt th:first-child, .msg.bot .txt td:first-child { padding-left: 0; }
+.msg.bot .txt th:last-child, .msg.bot .txt td:last-child { padding-right: 0; }
+@media (hover: hover) {
+  .msg.bot .txt tbody tr:hover td { background-color: var(--g-100); }
+  :root[data-theme="dark"] .msg.bot .txt tbody tr:hover td { background-color: var(--surface-2); }
+}
+
+/* ============ 批C（2026-10-03）：KaTeX 公式 + ASN.1 围栏着色；批次A2 恒深面重导 ============ */
+/* KaTeX 自带 katex.min.css 走 currentColor 继承，暗色主题零额外覆盖；
+   版面适配：块级公式上下留白与正文块间距节奏对齐（10-12px 域取 12px）、
+   超宽横向滚动（窄屏不撑破 40em 版心）；行内 1.05em 对 2.0 字阶复核：
+   正文 fs-16 → 16.8px，介于 16/17 两档之间、属公式的光学补偿，维持 */
+.msg.bot .txt .katex { font-size: 1.05em; }
+.msg.bot .txt .katex-display {
+  display: block; margin: 12px 0; padding: 2px 0;
+  overflow-x: auto; overflow-y: hidden;
+}
+.msg.bot .txt .katex-error { color: var(--err); } /* KaTeX 默认错误呈现：红色原文，不吞不炸 */
+/* ASN.1 token 色值（批次A2 按 2.0 重导）：代码面既为双主题恒深（§3.7），
+   着色一律取恒深面可用档、两主题共用一套（原亮色 --acc-700/--ok 在深底上不达 AA）：
+   kw=acc-300、pdu=acc-400（靛蓝阶亮档）、str=#6fce8e（2.0 暗套 ok-ink 同值，
+   恒深面上双主题 ≥7:1——修批次C 交接的亮色 hl-str 3.9:1 债）、num/cm=code-ink-dim
+   （对 code-bg 亮 6.2:1/暗 5.4:1），cm 叠 italic 区分 */
+.codeblock .hl-kw { color: var(--acc-300); font-weight: 600; }
+.codeblock .hl-pdu { color: var(--acc-400); font-weight: 600; }
+.codeblock .hl-str { color: #6fce8e; }
+.codeblock .hl-num { color: var(--code-ink-dim); }
+.codeblock .hl-cm { color: var(--code-ink-dim); font-style: italic; }

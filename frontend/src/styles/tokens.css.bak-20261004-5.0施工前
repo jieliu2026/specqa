@@ -1,0 +1,140 @@
+/* ============================================================
+   视觉 3.0 · T0.5 拆分（2026-10-04）
+   来源=base.css「设计 token + 全局基础」节（原 L1-87）+ 全局工具类
+   .sr-only（原 L534-539）。纯搬运：零 token 改值、零 DOM 改动；
+   文件内规则保持原 base.css 出现顺序；:root[data-theme="dark"]
+   覆写紧随其亮色本体之后（同文件保序）。
+   ============================================================ */
+/* ============ 视觉 3.0 T1 token 施工（2026-10-04）============
+   真源=/home/jieliu/qa-bot/运营/视觉3.0-20261004/基调稿与组件语言-3.0.md
+   §1.1/1.2/1.3/1.5/1.7（冻结口径）；拍板链=断点三节 31（2026-10-04：
+   强调色=丙案墨蓝、基调稿采纳照稿施工）。改动面=5 改值+7 新增+
+   丙案强调色整组替换（--acc-50…900 十档+派生 9 枚，亮暗两套）；
+   灰阶十档 --g-* 与表面三档两主题维持（治线不治面）。 */
+/* ============ 视觉 4.0 方向一 T1 token 施工（2026-10-04）============
+   真源=/home/jieliu/qa-bot/运营/视觉4.0-方向1-20261004/基调稿与组件语言-方向1.md
+   §一（十档+派生+焦点选区终值）/§四（圆角/投影材质阶终值）；拍板登记位=
+   断点三节。改动面=强调色整族换血（3.0 丙案墨蓝→信号橙：--acc-50…900 十档＋
+   派生 9 枚×亮暗＋focus/sel 焦点选区）＋圆角阶 --r-1/2/3=10/16/24＋投影两档
+   （--shadow-pop 扩档改值＋--shadow-card 新增，亮暗两套）；灰阶/表面/ink/
+   line/ok/err/ev/code/fs/sp/dur/col/rail-w/noise/font 底面族零波及（换皮不换骨）。 */
+/* ============ 设计 token ============
+   灰阶带蓝相（非纯灰）；强调色 3.0 起改丙案墨蓝单一色系；暗色按
+   Material 口径基面 #121212 起步、层级靠表面提亮、错误色降饱和提亮。
+   批次A2（2026-10-03 视觉 2.0，真源=运营/视觉2.0-20261003/基调稿与组件语言-2.0.md
+   第一节）：1.0 既有变量值全部维持不动，只新增——徽标深化色 --ok-ink/--warn-ink、
+   证据不足警示面 --ev-*、代码恒深面 --code-*、技术元数据字号 --fs-11、
+   动效时长阶 --dur-*、侧栏轨宽 --rail-w（§2.2 布局轨）。 */
+:root {
+  color-scheme: light;
+  /* 灰阶（带蓝相） */
+  --g-50:#f7f8fa; --g-100:#eef0f4; --g-200:#e3e6ec; --g-300:#cdd2dc;
+  --g-400:#a4abba; --g-500:#737b8c; --g-600:#565e6f; --g-700:#3f4655;
+  --g-800:#2a2f3a; --g-900:#1b1f27;
+  /* 强调色（4.0 方向一信号橙：3.0 丙案墨蓝十档整组换血，2026-10-04；
+     白字对 600 #cc440f = 4.77:1（≥4.5 ✓，贴线注记=基调稿 §1.4）；
+     机算 36 项 0 FAIL=机算-方向1十档.py，用途映射冻结=基调稿 §1.2） */
+  --acc-50:#fdeedd; --acc-100:#fad8bd; --acc-200:#f6bd94; --acc-300:#ec9a6e;
+  --acc-400:#e0763f; --acc-500:#d5501a; --acc-600:#cc440f; --acc-700:#a83a0d;
+  --acc-800:#8f2f0a; --acc-900:#6e2408;
+  /* 语义面 */
+  --bg:#f7f8fa; --surface:#ffffff; --surface-2:#fbfcfe;
+  --ink:#1b1f27; --ink-2:#565e6f;
+  --ink-3:#697181; /* 3.0 改值（§1.1 勘误2）：#6b7383→#697181，对 bg 4.49→4.62（4.5 线边缘债清偿） */
+  --line:#e3e6ec; --line-strong:#cdd2dc;
+  /* 3.0 新增：线制四档（§1.4）——L2 结构粗线/L1.5 中线（字面量独立于灰阶，
+     用途穷举：rule-heavy=表格顶底线+masthead 双线粗段；rule-mid=表头 midrule/
+     srcs 顶线/hr/blockquote 左线/masthead 双线细段） */
+  --rule-heavy:#737b8c; /* 对 bg 4.00（结构线过 3:1 ✓） */
+  --rule-mid:#a4abba;   /* 对 bg 2.17（排印冗余档豁免，目标 ≥2 ✓） */
+  /* 4.0 方向一派生（亮套，映射公式沿 3.0 丙案同构）：ink=800、tint=50、
+     tink=900、tint-line=200、focus=500（=基调稿 §1.3 终值表） */
+  --accent:#cc440f; --accent-hover:#a83a0d; --accent-ink:#8f2f0a;
+  --accent-tint:#fdeedd; --accent-tink:#6e2408; --tint-line:#f6bd94;
+  --ok:#2f9e44; --err:#c92a2a;
+  --err-tint:#fdf2f2; --err-line:#f0c9c9;
+  --focus:#d5501a; --sel-bg:#f8dcc6; --sel-ink:#8f2f0a; /* 4.0 方向一：focus=500（对 bg 3.96 ✓）、sel 亮 #f8dcc6/#8f2f0a（6.22 ✓） */
+  /* 3.0 新增（§1.5）：焦点环复合值收编——四处手抄双环（codebar input/row textarea
+     :focus、button:focus-visible、.rail-item-input/.rail-search:focus）T2 统一换
+     box-shadow: var(--focus-ring)；引用 --surface/--focus，主题翻转自动跟随 */
+  --focus-ring:0 0 0 2px var(--surface), 0 0 0 4px var(--focus);
+  /* 2.0 新增：引文徽标深化文本色（对 surface-2 ≈5.2:1，修 1.0 两枚亮色 3.3/3.4:1 债） */
+  --ok-ink:#1e7a44; --warn-ink:#8a6508;
+  /* 2.0 新增：证据不足（evInsufficient）警示面（3.3 升格警示态用） */
+  --ev-tint:#fdf6e9; --ev-line:#e4d5ac;
+  /* 2.0 新增：代码块恒深面（3.7 双主题恒深，亮色主题下代码底也为深色） */
+  --code-bg:#1c2028; --code-ink:#d6dae4; --code-ink-dim:#98a0b3;
+  --code-line:#3a4150; /* 3.0 改值（§1.1/C-4.2）：#323845→#3a4150，对 code-bg 1.39→1.59（装饰豁免档提亮） */
+  /* 排版/间距/圆角/网格 */
+  --font-sans:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "PingFang SC", "HarmonyOS Sans SC", "MiSans",
+    "Microsoft YaHei", "Noto Sans CJK SC", "Noto Sans SC", sans-serif;
+  --font-mono:ui-monospace, "SF Mono", "Cascadia Code", "Cascadia Mono",
+    Menlo, Consolas, "Liberation Mono", monospace;
+  /* 3.0 新增：display 衬线层专用栈（§1.3；白名单穷举制=W1 空状态主标题/W2 引号
+     字形/W3 预留，清单外任何面禁用 var(--font-display)；亮暗同栈零覆写） */
+  --font-display:"QABot Serif Display", "Source Han Serif SC",
+    "Noto Serif CJK SC", "Songti SC", "SimSun", serif;
+  /* --fs-11 仅限技术元数据（代码语言标签/引文徽标/token 徽标），对比预算同 4.5:1，
+     不得用于句子级文本（1.3 节） */
+  --fs-11:11px; --fs-12:12px; --fs-13:13px; --fs-15:15px; --fs-16:16px; --fs-17:17px;
+  --fs-20:20px; --fs-24:24px;
+  --fs-28:28px; --fs-32:32px; /* 3.0 新增：display 字阶（§1.3b；masthead H1，≤540 断点用 fs-28） */
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px; --sp-6:32px; --sp-7:48px;
+  --r-1:10px; --r-2:16px; --r-3:24px; /* 4.0 方向一材质阶（§4.1）：6/10/14→10/16/24，消费面零改动（token 涟漪） */
+  --col:720px; /* 单一内容列（瑞士网格，2.0 维持） */
+  --rail-w:264px; /* 2.0 §2.2：侧栏轨宽（≥1024px 常驻 chrome 层，不入内容网格） */
+  --shadow-card:0 1px 2px rgb(0 0 0/.05), 0 6px 14px -6px rgb(0 0 0/.1); /* 4.0 方向一新增（§4.2）：静态卡片件低海拔档（hero-card/fu-chip/srcs-it/icp） */
+  --shadow-pop:0 12px 20px -6px rgb(0 0 0/.14), 0 4px 8px -4px rgb(0 0 0/.1); /* 4.0 方向一扩档改值（§4.2）：浮层海拔档，两档不混用 */
+  /* 2.0 新增：动效时长阶（1.6 节克制面；曲线只用 linear/ease-out，禁 spring） */
+  --dur-1:80ms; --dur-2:120ms; --dur-3:200ms;
+  /* 纸感噪点（黑颗粒，暗色主题换白颗粒）；浅底显脏则再降 opacity */
+  --noise:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg:#121212; --surface:#1e1e1e; --surface-2:#242424;
+  --ink:#e9eaee; --ink-2:#aab0bd; --ink-3:#8f95a3;
+  --line:#3a3f4a; --line-strong:#414652; /* 3.0 改值（§1.2/C-4.2 灰上灰治理）：#2c2f36→#3a3f4a（对 #1e1e1e 1.24→1.58）、#3b3f49→#414652（对 #121212 1.78→1.98） */
+  --rule-heavy:#6e7684; /* 3.0 新增（§1.4）：暗结构粗线，对 #121212 4.09（过 3:1 ✓）；暗线亮度封顶值（宪法四-6） */
+  --rule-mid:#4a5060;   /* 3.0 新增：暗中线，对 #121212 2.33（豁免档 ≥2 ✓） */
+  /* 4.0 方向一派生（暗套覆写；accent/hover 亮暗同值沿 3.0 §1.7 通则）：
+     ink 提亮档 #f2a37a、tint #3f2515、tink #f3b48c、tint-line #71411f、focus #f08c4f */
+  --accent:#cc440f; --accent-hover:#a83a0d; --accent-ink:#f2a37a;
+  --accent-tint:#3f2515; --accent-tink:#f3b48c; --tint-line:#71411f;
+  --ok:#51cf66; --err:#f0838f;
+  --err-tint:#3a2226; --err-line:#5c3237;
+  --focus:#f08c4f; --sel-bg:#4a2c16; --sel-ink:#e9eaee; /* 4.0 方向一：focus 对 bg 7.64/surface 6.80（≥3 ✓）、sel 暗 #4a2c16/#e9eaee（10.50 ✓） */
+  /* 2.0 新增（暗套）：徽标文本提亮（对 surface-2 ≈7.6/7.1:1）+证据不足警示面加深 */
+  --ok-ink:#6fce8e; --warn-ink:#d9a62e;
+  --ev-tint:#33291a; --ev-line:#5c4d2a;
+  /* 2.0 新增（暗套）：代码底比基面再压一档（恒深面与基面区分，3.7） */
+  --code-bg:#0f1014; --code-ink:#ced3dd; --code-ink-dim:#7d8496; --code-line:#2e3542; /* 3.0 改值：#262a33→#2e3542，对 code-bg 1.32→1.54（豁免档提亮） */
+  /* 2.0 新增（暗套）：浮层投影加深（回底浮钮/预览卡/抽屉，1.2 节）；
+     4.0 方向一（§4.2）：--shadow-pop 扩档改值＋--shadow-card 新增（暗套加深） */
+  --shadow-card:0 1px 2px rgb(0 0 0/.35), 0 6px 14px -6px rgb(0 0 0/.45);
+  --shadow-pop:0 12px 20px -6px rgb(0 0 0/.55), 0 4px 8px -4px rgb(0 0 0/.45);
+  --noise:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeColorMatrix type='matrix' values='-1 0 0 0 1 0 -1 0 0 1 0 0 -1 0 1 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: var(--font-sans); font-size: var(--fs-15); line-height: 1.7;
+  background-color: var(--bg); background-image: var(--noise); background-repeat: repeat;
+  color: var(--ink); display: flex; flex-direction: column;
+  -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%;
+  font-kerning: normal;
+  text-autospace: ideograph-alpha ideograph-numeric;
+}
+:root[data-theme="dark"] body { -webkit-font-smoothing: antialiased; }
+::selection { background: var(--sel-bg); color: var(--sel-ink); }
+/* Vue 挂载包裹层：接管 vanilla 里 body 承担的三段式 flex 列容器角色
+   （header/main/footer 由 body 直挂改为 #app 直挂）。缺此规则时 #app 为
+   block、main 高度不受限 → 滚动容器退化到 document，贴底/回底浮钮全失效。 */
+#app { display: flex; flex-direction: column; height: 100%; }
+/* 视觉隐藏读屏镜像区（aria-live：流式毕"回答完成"/出错播报；绝不逐 token） */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  clip-path: inset(50%);
+}

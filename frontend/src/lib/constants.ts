@@ -1,0 +1,35 @@
+/* 批0 移植（2026-10-03）：自 static/index.html 逐值照搬的前端常量。
+   出处条/深度批A 枚举白名单映射：非枚举值一律不渲染=注入面归零，
+   文案为前端常量、不进 HTML 属性。 */
+
+export const KEY_MSGS = 'qabot_msgs';
+export const KEY_CODE = 'qabot_code';
+export const KEY_THEME = 'qabot_theme';
+export const KEY_AUTH = 'qabot_auth';
+export const KEY_CONV = 'qabot_conv';
+/* 二期批次B（2026-10-03）：导入标记键（'declined'/'imported'，任何非空值=不再弹，
+   照 qabot_auth 小键先例）与原件快照键（确认导入时把 qabot_msgs 原文一字不改
+   存档，兑现"原件保留"回退位；Vue 正常流永不写此键）。 */
+export const KEY_IMPORT_DONE = 'qabot_import_done';
+export const KEY_LEGACY_SNAPSHOT = 'qabot_legacy_snapshot';
+/* 5.0 反馈批2（2026-10-04）：桌面侧栏（rail）折叠态键——'1'=折叠、键缺位=
+   展开（默认；照 qabot_auth 小键先例，store.ts watch 写入/删除）。仅 ≥1024
+   过程日志消费（App.vue isDesktop 闸+chrome.css 媒体块双闸），<1024 抽屉语义
+   零涉；登记=运营/视觉5.0-现代极简-20261004/T-b-DOM差异清单.md §十四。 */
+export const KEY_RAIL_COLLAPSED = 'qabot_rail_collapsed';
+
+/** 出处条默认露出条数，超出折叠为 +N 展开 */
+export const SRC_MAXSHOW = 2;
+
+/** citation_check 逐源徽标（服务端 SSE {"type":"citation_check",overall,per_source}） */
+export const CC_VERDICT: Record<string, string> = { supports: '支持', partial: '部分', unsupported: '不支持', not_relevant: '不相关' };
+
+/** citation_check 总标 chip（overall 白名单外不渲染） */
+export const CC_LABEL: Record<string, string> = { grounded: '引文有据', partial: '引文部分有据', inferred: '引文含推断' };
+
+/** evidence_insufficient 注意条（复用 offtopic 提示位）：reason 缺失时的兜底文案 */
+export const INSUFF_HEAD = '语料可能不足：';
+export const INSUFF_FALLBACK = '本题涉及精确数值/参数取值，检索语料未必充分覆盖，请以官方原文为准并建议人工复核。';
+
+/** off_topic 提示（低分未命中语料）：气泡顶部一行说明 */
+export const OFFTOPIC_TEXT = '本次未命中语料，回答为通用模型输出';

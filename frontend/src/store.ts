@@ -1,0 +1,107 @@
+/* qa-bot 前端批次0（代理D，2026-10-03）：响应式状态 + localStorage 兜底 + 白名单序列化。
+   行为真源：static/index.html（927 行 vanilla 版）——本文件对应其状态变量区（353-380 行）
+   与 save()（583 行）；qabot_msgs 序列化按白名单字段，与旧版双向兼容。 */
+
+import { reactive, watch } from 'vue';
+import { KEY_MSGS, KEY_CONV, KEY_RAIL_COLLAPSED } from './lib/constants';
+import type { Msg, Conversation } from './types';
+
+/* 受限 webview（如沙箱 iframe/禁存储环境）访问 localStorage 会抛 SecurityError，统一兜底 */
+export function lsGet(k: string): string | null {
+  try { return localStorage.getItem(k); } catch { return null; }
+}
+export function lsSet(k: string, v: string): void {
+  try { localStorage.setItem(k, v); } catch {}
+}
+export function lsDel(k: string): void {
+  try { localStorage.removeItem(k); } catch {}
+}
+
+export const state = reactive({
+  msgs: [] as Msg[],
+  streaming: false,   // 流式进行中（sendBtn 变"停止"）
+  stick: true,        // 贴底滚动：用户上滑即停跟随，滚回底部恢复
+  code: '',           // 仅暂存待上送 /api/login 的口令（?code= 流），不落 localStorage
+  authed: false,      // 登录态（服务端 qabot_session cookie 承担凭据；qabot_auth='1' 只是纯 UI 标志）
+  botLabel: '网优工程师的qa-bot', // AI 消息的角色标签（健康检查回填后随 bot_name 更新）
+  dotState: 'init' as 'init' | 'ok' | 'down', // 健康灯
+  codeShow: false,    // 口令栏 .show
+  codePh: '请输入访问口令', // 口令栏占位（askCode/loginFail 场景化文案）
+  codeErr: false,     // 口令栏红边（登录失败提示，100ms 后清除）
+  inputText: '',      // 主输入框 v-model
+  inputPh: '输入你的问题…（Enter 发送）', // 触屏由 matchMedia('(hover: none)') 动态替换
+  model: '',          // 批B：health 回包的模型名（POST 全量态才有；statusDot 悬停提示用）
+  /* ============ 末轮集成：多会话（侧栏接线，2026-10-03） ============
+     convs=GET /api/conversations 列表；convLoad=列表三态（loading/ready/error，
+     'off'=服务端 conversations_enabled=false 的 404 态）；convSwitching=切换
+     会话拉取 messages 期间的侧栏防抖锁；currentConvId=当前服务端会话 id
+     （每轮读 SSE 响应头 X-QA-Conv-Id 续写、下轮请求头显式带回；null=未挂接）；
+     announce=视觉隐藏 aria-live 镜像区文案（流式毕"回答完成"/出错播报）。 */
+  convs: [] as Conversation[],
+  convLoad: 'idle' as 'idle' | 'loading' | 'ready' | 'error' | 'off',
+  convSwitching: false,
+  currentConvId: null as number | null,
+  announce: '',
+  /* 5.0 反馈批2（2026-10-04）：≥1024 桌面侧栏折叠态。初值=localStorage
+     恢复（刷新恢复折叠态；lsGet 自带受限 webview 兜底，键缺位=false=默认
+     展开=现状零漂移）。<1024 抽屉过程日志不消费此字段（口径见下方 watch 注）。 */
+  railCollapsed: lsGet(KEY_RAIL_COLLAPSED) === '1',
+});
+
+/* ============ 二期批A（2026-10-03）：刷新回位——currentConvId 持久化 ============
+   独立小键 qabot_conv（照 qabot_theme/qabot_auth 先例，不塞进 qabot_msgs 数组）；
+   watch 集中一处捕获所有变更源（App.vue 的切换/新建/删除/登出与 useChat 的
+   SSE 响应头回写都改同一 reactive 对象，Proxy 全局生效）。销一期登记的
+   "刷新后旧对话保留显示、下次发送挂新会话"已知简化（过程日志一节17 尾部）。
+   null=删键；恢复解析在 App.vue（键值=十进制字符串，非正整数一律无视=回退
+   旧版行为）。 */
+watch(function () { return state.currentConvId; }, function (v) {
+  if (v === null || v === undefined || !isFinite(v) || v < 1) lsDel(KEY_CONV);
+  else lsSet(KEY_CONV, String(v));
+});
+
+/* ============ 5.0 反馈批2（2026-10-04）：桌面侧栏折叠态持久化 ============
+   独立小键 qabot_rail_collapsed（照 qabot_theme/qabot_auth/qabot_conv 小键
+   先例，不塞进 qabot_msgs 白名单——折叠态是布局偏好非消息数据，旧版读新存
+   零波及）；'1'=折叠、展开=删键零足迹（默认态不留存储痕迹）。消费面双闸：
+   App.vue isDesktop（matchMedia ≥1024）管 #railBtn 点击语义与 aria-expanded
+   取值，chrome.css ≥1024 媒体块管样式生效——<1024 天然忽略折叠态、回
+   ≥1024 按本字段恢复（跨过程日志 resize 零额外监听，CSS/JS 各守同值过程日志）。 */
+watch(function () { return state.railCollapsed; }, function (v) {
+  if (v) lsSet(KEY_RAIL_COLLAPSED, '1');
+  else lsDel(KEY_RAIL_COLLAPSED);
+});
+
+/* 流式 .txt 类绑定：waiting（发送起到首帧冲刷）/waitlong（2 秒定时器）/typing（首帧冲刷到 finish）。
+   只作用于流式中的最后一条；finish/停止/出错后全清；历史恢复消息无这些类（不入存储）。 */
+export const streamCls = reactive({ waiting: false, waitlong: false, typing: false });
+
+/* 白名单序列化：role/content/error/sources/offTopic/evInsufficient/evReason/cc/cgate，
+   undefined 不写；transient（pending/流式类/出处折叠态/完成时刻 ts/反馈 traceId）不入存储；
+   字段名与旧版一致——旧版读新存、新版读旧存，双向兼容。
+   批B（2026-10-03）新增 usage（number）：旧版（vanilla）读新存会忽略该字段、
+   旧版再存一次即丢 usage——可接受降级（旧版无操作条/徽标消费方，丢后无感）。
+   末轮集成（2026-10-03）新增 followups（string[]，追问建议持久化）：
+   traceId 严守 transient 不入库（刷新后旧消息不显示反馈钮，防旧 trace 复用）。
+   意图缺口批甲（2026-10-09）新增 insightGap（string，通识标注条文本）：
+   持久化随消息恢复（刷新后标注行仍在——提示语义非瞬态）。
+   话术批（2026-10-16）新增 otNote（string，off_topic 渠道引导条文本）：
+   持久化随消息恢复（同 insightGap 口径）。 */
+export function save(): void {
+  const arr = state.msgs.map((msg) => {
+    const o: Record<string, unknown> = { role: msg.role, content: msg.content };
+    if (msg.error !== undefined) o.error = msg.error;
+    if (msg.sources !== undefined) o.sources = msg.sources;
+    if (msg.offTopic !== undefined) o.offTopic = msg.offTopic;
+    if (msg.otNote !== undefined) o.otNote = msg.otNote;
+    if (msg.evInsufficient !== undefined) o.evInsufficient = msg.evInsufficient;
+    if (msg.evReason !== undefined) o.evReason = msg.evReason;
+    if (msg.insightGap !== undefined) o.insightGap = msg.insightGap;
+    if (msg.cc !== undefined) o.cc = msg.cc;
+    if (msg.cgate !== undefined) o.cgate = msg.cgate;
+    if (msg.usage !== undefined) o.usage = msg.usage;
+    if (msg.followups !== undefined) o.followups = msg.followups;
+    return o;
+  });
+  lsSet(KEY_MSGS, JSON.stringify(arr));
+}

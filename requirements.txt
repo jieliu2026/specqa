@@ -1,0 +1,38 @@
+# specqa pinned dependencies (derived from verified lockfile)
+fastapi==0.141.1            # Web 框架（tests/ 与 server.py 测试面）
+starlette==1.6.0            # fastapi 底座（SSE 流测试）
+uvicorn==0.53.0             # e2e 冒烟启动真实服务
+httpx==0.28.1               # TestClient 底座 + 百炼 API 客户端（rag.py/citation_check.py 等）
+httpcore==1.0.9             # httpx 依赖
+anyio==4.15.1               # starlette/httpx/watchfiles 公共依赖
+certifi==2026.7.22          # httpx/httpcore TLS 根证书
+idna==3.19                  # anyio/httpx 域名解析
+h11==0.16.0                 # httpcore/uvicorn HTTP/1.1 解析
+faiss-cpu==1.15.1           # 向量检索（rag.py、tests/test_rag_faiss.py）
+numpy==2.5.3                # faiss/tokenizers 及评测脚本公共底座
+bcrypt==5.0.0               # 口令哈希工具链（任务口径明令保留）
+websockets==17.1            # uvicorn[standard] 件（e2e 服务保真）
+uvloop==0.22.1              # uvicorn[standard] 件（e2e 服务保真）
+httptools==0.8.0            # uvicorn[standard] 件（e2e 服务保真）
+watchfiles==1.3.0           # uvicorn[standard] 件（e2e 服务保真）
+python-dotenv==1.2.3        # uvicorn[standard] 件（e2e 服务保真）
+pydantic==2.13.5            # fastapi 依赖
+pydantic_core==2.46.5       # pydantic 核心
+annotated-types==0.8.0      # pydantic 依赖
+annotated-doc==0.0.5        # fastapi 依赖
+typing-inspection==0.4.4    # fastapi/pydantic 依赖
+typing_extensions==4.16.0   # fastapi/starlette/pydantic 等公共依赖
+tokenizers==0.23.2          # server.py / tests/test_token_budget.py 直接使用（任务明令保留）
+huggingface-hub==1.32.0     # tokenizers 0.23.2 的硬依赖（metadata 实证），故保留
+filelock==3.32.3            # huggingface-hub 依赖
+fsspec==2026.7.0            # huggingface-hub 依赖
+hf-xet==1.6.0               # huggingface-hub 依赖
+tqdm==4.70.1                # huggingface-hub 依赖
+PyYAML==6.0.3               # huggingface-hub 依赖
+click==8.5.0                # huggingface-hub 与 uvicorn 双依赖方在位
+pytest==9.1.1               # 测试框架（CI 收面 = tests + 建库/scripts/tests 共 91 件）
+iniconfig==2.3.0            # pytest 依赖（含本草案 pytest.ini 的 ini 解析）
+pluggy==1.6.0               # pytest 依赖
+packaging==26.3             # pytest/faiss-cpu 公共依赖
+pygments==2.21.0            # pytest 依赖
+setuptools==78.1.0          # 构建基建兜底（freeze 原位保留，部分 sdist 构建需要）

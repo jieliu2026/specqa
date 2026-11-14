@@ -1,0 +1,144 @@
+# ============================================================================
+# qa-bot 仓 gitleaks 配置 —— 观察模式（C5 首轮 2026-10-07 ＋ 观察轮②迭代 2026-10-07）
+# ----------------------------------------------------------------------------
+# 状态声明：观察模式配置，误报清零后才进 pre-push 拦截。当前只服务于观察
+#   报告（运营/测试体系-20261007/密件扫描-首轮-20261007.md），不拦截任何
+#   提交/推送；进拦截的前置条件＝「零真密件＋误报清单」成立并经拍板。
+#
+# 【独立重生成说明】本档可按以下口径确定性重建：
+#   1. 基础规则＝gitleaks 官方默认内置规则（不裁剪）。实现＝[extend]
+#      useDefault = true，叠加 8.30.1 二进制内嵌的官方默认配置
+#      （源=https://github.com/gitleaks/gitleaks/blob/v8.30.1/config/gitleaks.toml），
+#      不设 extend.disabledRules、不复制正文。默认全局 allowlist（venv/lib、
+#      .git、二进制后缀、锁文件等路径排除）在 extend 时按 gitleaks 源码
+#      config.go extend() 的 append 语义与下列本仓抑制项并存（或关系），
+#      不被覆盖——已实证（冒烟仓对照，见 C5 施工报告）。
+#   2. 本仓抑制项来源＝ 仓说明-20260916.md 密件名单/脱敏登记 ＋ .gitignore
+#      类目口径 ＋ 2026-10-07 跟踪面 git grep 实测占位形态：
+#      a) tests/ 测试桩占位串：pw-test、stub-model（多处测试文件）；
+#      b) tests/test_deploy_check_sanitize.py 脱敏器用例样例口令：hunter2；
+#      c) config.example.json 尖括号占位值：<在此填访问口令>、
+#         <口令哈希（64 位 hex）…>、<16 字节盐（32 位 hex）…>；
+#      d) 跟踪面无 IP 实值/掩码值段（README 2026-09-17 已脱敏、仅剩
+#         密件档指针，git grep 实测零值段），故 IP 形态暂无抑制项。
+#      后续新增占位形态按同口径追加，并在观察报告登记迭代项。
+#   3. 验证命令：/home/jieliu/bin/gitleaks dir <目标路径> -c 本档 \
+#        --redact --no-banner（二进制版本与 sha256 见 C5 施工报告）。
+#   4. 观察轮②迭代（2026-10-07，报告=运营/测试体系-20261007/密件扫描-观察轮②
+#      -20261007.md）：追加抑制项③（密件之家路径白名单）、④（语料/训练/日志
+#      族 FP 模态行级正则）、⑤（stopword 扩充）。首轮①②原样保留未动。全部
+#      FP 模态来源＝当日两路基线复现扫描（git 史 103、工作区 43）逐条 Match
+#      上下文定性，非目录级白名单（paths= 文件级跳过语义警示见④注释）。
+# ============================================================================
+
+[extend]
+useDefault = true
+
+# ---- 抑制项①：跟踪面已知占位/样例口令串 --------------------------------
+# stopword 按捕获密文的小写子串匹配（gitleaks 8.30.1 allowlist.go 语义），
+# ASCII 串一律小写登记；Chinese 串按原文子串。
+[[allowlists]]
+description = "qa-bot 观察模式抑制项①：测试桩与模板占位串（2026-10-07 首轮登记）"
+stopwords = [
+    "pw-test",
+    "stub-model",
+    "hunter2",
+    "在此填访问口令",
+    "口令哈希（64 位 hex）",
+    "16 字节盐（32 位 hex）",
+]
+
+# ---- 抑制项②：config.example.json 尖括号占位值行（行级正则兜底） --------
+# regexTarget=line 对整行判定，防密文捕获形态变化时占位行漏网。
+[[allowlists]]
+description = "qa-bot 观察模式抑制项②：config.example.json 尖括号占位值行"
+regexTarget = "line"
+condition = "or"
+regexes = [
+    '''(?i)passcode["']?\s*[:=]\s*["']?<(?:在此填|口令哈希|16\s*字节盐)''',
+    '''(?i)(?:passcode_hash|passcode_salt)["']?\s*[:=]\s*["']?<''',
+]
+
+# ---- 抑制项③：密件之家路径白名单（观察轮②，2026-10-07） --------------------
+# 口径：这不是"把真密件标成误报"，而是承认 运维私密-*（含其 .bak 副本）是
+# 真密件的按设计存放位（密件之家）——该族不入跟踪（.gitignore 登记）、git 史
+# 两轮实测零命中，仅工作区扫描命中（alibaba-access-key-id 真阳性按设计 4 条 +
+# 同一行 generic-api-key 双规则命中 4 条，2026-10-07 观察轮②实测）。白名单化
+# 后工作区扫描对该族静默；真密件位移到任何其他路径仍会照常告警（正则锚定
+# 文件名前缀"运维私密-"，(^|/) 兼容 git 相对路径与 dir 绝对路径两种形态）。
+[[allowlists]]
+description = "qa-bot 观察模式抑制项③：密件之家路径白名单（运维私密-* 含 .bak）"
+paths = [
+    '''(^|/)运维私密-[^/]+$''',
+]
+
+# ---- 抑制项④：语料/训练/日志族 FP 模态（观察轮②，行级精确抑制） --------------
+# 纪律：不整目录路径白名单（防连带压制将来误提交进语料目录的真密件）。
+# 【gitleaks 语义警示（观察轮②实测）】全局 allowlist 块内写 paths= 会触发
+# 文件级跳过——路径命中即整文件不扫描，即使 condition="and" 叠加行级正则
+# 也不生效（实测 dir 扫描量 5.64GB→28.40MB，建库/运营/ 被整目录跳过），
+# 等效整目录白名单，已回退。故本项只用行级正则（regexTarget="line"），
+# 不含 paths；路径白名单仅抑制项③（密件之家）一处、系有意为之。
+# 每条正则锚定一个实测 FP 模态：
+#   a) rerank 训练对 JSON 键 answer_key（值=语料长文本；git 史 87 命中）；
+#   b) 语料块段键 section_key（值实测恒=16 位小写十六进制块 id；7 文件
+#      277 处全同形态，含 json 与 md 两种写法）；
+#   c) 3GPP TS 38.306 特性表行文"For shared spectrum channel access,
+#      <ASN.1 特性名-r16> applies"（被捕获段=ASN.1 特性名；9 命中全此形态）；
+#   d) 扩容仿真脚本变量 key_block_best/key_block_worst 赋值（值=表达式）；
+#   e) 语料巡检脚本 os.path.join(WS, key, "<3GPP 规格文件名>") 路径构造；
+#   f) 探针复现脚本实验标签对 ("a_zero_api", "<实验标签>")。
+[[allowlists]]
+description = "qa-bot 观察模式抑制项④：语料训练日志族 FP 模态（行级精确抑制）"
+regexTarget = "line"
+condition = "or"
+regexes = [
+    '''answer_key["']?\s*[:=]\s*["']''',
+    '''section_key["']?\s*[:=]\s*["']?[0-9a-f]{16}\b''',
+    '''(?i)channel access,\s*['"]?[A-Za-z][A-Za-z0-9]*(?:-[A-Za-z0-9]+){2,}''',
+    '''key_block_(?:best|worst)\s*= ''',
+    '''os\.path\.join\(WS,\s*key,\s*["']''',
+    '''"a_zero_api"\s*,\s*["']''',
+]
+
+# ---- 抑制项⑤：stopword 扩充（观察轮②，2026-10-07） --------------------------
+# stopword 按捕获密文的小写子串匹配，两词均为结构性安全词（真密文不含此类
+# 英文短语子串）：
+#   - not-a-number：tests/test_security_passcode.py 非法迭代数用例字面量
+#     （"pbkdf2_iterations=\"not-a-number\"" 被捕获为密文）；
+#   - pbkdf2_iterations：C3 云端 runbook 文档行里 KDF 参数名被误捕获为密文
+#     （首轮 L20 登记的 pbkdf2 文档行模式，参数名非密文）。
+[[allowlists]]
+description = "qa-bot 观察模式抑制项⑤：测试样例值与 KDF 参数名 stopword 扩充"
+stopwords = [
+    "not-a-number",
+    "pbkdf2_iterations",
+]
+
+# ---- 抑制项⑥：U3 跑批明细 qhash 误报豁免（2026-10-15 债案乙呈报） ----------
+# 命中形态恰为 "key": "<16位hex>"——值为题面哈希 qhash（sha256(题面)[:16]），
+# 与同对象 qhash 字段同值（四重铁证=同值/16位纯hex/无sk-前缀/与真钥前缀不符，
+# 证据=work/git备份-20261015/施工回执-20261015.md §五）。真钥 32+ 位不匹配
+# 本式。按钩子注释禁令：不加 paths=（内容形态豁免，非路径豁免）。
+[[allowlists]]
+description = "u3跑批明细 qhash 误报豁免（2026-10-15 债案乙呈报；key 值=16位hex题面哈希，与同对象 qhash 字段同值）"
+regexTarget = "match"
+regexes = ['key"?\s*:\s*"[0-9a-f]{16}"']
+
+# ---- 抑制项⑦：公开网页存证四件路径白名单（2026-10-18 形状战推送轮） --------
+# 载体=第三方公开网页存证件（取证快照/API 元数据），命中 generic-api-key 的
+# 值全系 8 位纯 alnum 网页 plumbing 短 token（PMC reCAPTCHA 挑战页 script
+# nonce/Zenodo 公开 API files.key/USC 法条页前端 apiKey 变量）——非本仓密件；
+# 本仓真钥 ≥32 位物理不匹配。**精确到四件文件**（非整目录，防连带压制将来
+# 误提交进证据目录的真密件）；沿抑制项③ paths= 先例（密件之家同款"有意为
+# 之"口径）。教训注记：内容形态豁免（regexTarget=match/line 两式）经实测
+# 在 gitleaks 8.30.1 git 模式（--log-opts）下均不生效（no-git 模式生效），
+# 双试失败记录在档——本项为实证可行路径。
+[[allowlists]]
+description = "公开网页存证四件路径白名单（2026-10-18：8 位 alnum 网页短 token 误报；精确四文件非目录）"
+paths = [
+    '''(^|/)work/批B-取数pilot-20261018/raw/G04-PMC7926715-pdflanding\.html$''',
+    '''(^|/)work/批C-绿面取数-20261018/合规证据/zenodo-5603820-元数据-20261018\.json$''',
+    '''(^|/)work/批C-绿面取数-20261018/合规证据/zenodo-5603899-元数据-20261018\.json$''',
+    '''(^|/)work/批C-绿面取数-20261018/合规证据/17USC105-法条页快照-20261018\.html$''',
+]

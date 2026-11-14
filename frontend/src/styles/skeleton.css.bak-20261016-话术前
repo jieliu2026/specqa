@@ -1,0 +1,304 @@
+/* ============================================================
+   视觉 3.0 · T0.5 拆分（2026-10-04）
+   来源=base.css「三段式骨架」节：header/main/thread（原 L138-177）、
+   footer/codebar/row/disclaimer/icp（原 L217-259，button:focus-visible
+   通用焦点环归 motion.css）、jump 回底浮钮与 --jump-b 基础定义
+   （原 L282-299，540px 窄屏覆写媒体块整块在 message.css——skeleton
+   先于 message 加载，先基后覆保持）、send.stop（原 L306-309）、
+   import-bar 导入条（原 L619-637，二期批次B/C 节）。
+   纯搬运：零 token 改值、零 DOM 改动；文件内规则保持原 base.css 出现顺序。
+   ============================================================ */
+/* ============================================================
+   视觉 3.0 · T5 施工（2026-10-04）：微观与移动打磨
+   真源=运营/视觉3.0-20261004/基调稿与组件语言-3.0.md + 九张现状截图
+   诊断欠账；拍板=断点三节31。本件改动面：≤540 断点 .icp 徽章带紧凑化
+   （§3.12 全维持+移动端精简：双徽章尽量同行、flex-wrap 保底，纯 CSS
+   不删元素不改 DOM）+disclaimer 与 icp 间距收紧一档。jump 浮钮 36px
+   维持（非高频件+浮钮惯例，登记不扩）。
+   （2026-10-04 T-b2 注：本块 icp 徽章带紧凑形态已被备案区自然化批取代
+   ——.icp 终态=纯文本小字链接单行居中，见下 icp 节注释与差异清单 §十三；
+   disclaimer ≤540 规则维持。）
+   ============================================================ */
+/* ============================================================
+   视觉 5.0 反馈批2/批3（2026-10-04）
+   ------------------------------------------------------------
+   批2（桌面布局校准，登记=运营/视觉5.0-现代极简-20261004/T-b-DOM差异清单.md
+   §十四）：--col 720→880（tokens 单值）的消费面五处（header/footer
+   padding-inline、main padding、.hero max-width、.jump 右缘两档）全为
+   max()/calc 钳制形态**自动跟随零声明改动**；本件唯一新增=≥1024 .jump
+   右缘对齐的折叠态覆写（.shell.rail-collapsed + .jump——#jumpBtn 为 .shell
+   的下一兄弟：侧栏折叠后内容列对全视口居中，原扣 --rail-w 公式会偏轨宽
+   之半 132px；位置切换瞬时完成不加过渡=允许清单不扩，回底浮钮仅上滑
+   离底时可见、与 120ms 折叠动画同帧并发概率极低，登记=§十四）。
+   批3（手机 header 名字单行，登记=§十五）：≤540 header .name 插档
+   fs-14（tokens 同批新增 --fs-14）＋nowrap/hidden/ellipsis/min-width:0
+   ——生产名「网优工程师的qa-bot」375 登录态（登出钮挤占）折 2 行→
+   物理单行（任何长度名字不折行，溢出省略号）；用户令「小一点、占一行、
+   但名字又不能太小」=14px 插档裁决（13 太小、15 装不下）。桌面口径零改；
+   #clearBtn/#themeBtn/#railBtn/#statusDot 口径零改；header gap/padding
+   零改（375 静态预算余量 ≈26px 足够，无需压缩，读数=§十五）。
+   ============================================================ */
+/* ============================================================
+   视觉 5.0 反馈批5（2026-10-04 A 级流程；数值冻结与 T-d3 并行同值；
+   登记=运营/视觉5.0-现代极简-20261004/T-b-DOM差异清单.md §十七）
+   ------------------------------------------------------------
+   ①header 登出钮退役（用户拍板：仅 UI 入口退役，后端 /api/logout 在役）
+   ——App.vue DOM+点击 handler 与本件对应样式块同批删除；退役 id/类名
+   字面本横幅刻意不复述（守 grep 清零口径，穷举=§十七.1）。motion.css
+   的 hover/过渡清单残留死规则=跨边界登记不动手（§十七.7）。
+   ②--col 880→940（tokens 单值）：本件消费面 header/footer
+   padding-inline、main padding、.hero max-width、.jump 右缘两档全为
+   max()/calc 钳制形态自动跟随零声明改动；1280 展开侧栏 shell-body
+   1016−940=两侧各 38px≥32 核线成立（折叠态 170/1920 展开 358 更宽）。
+   ③≤540 header 名字再升档：fs-14→fs-16 且省略号截断删除（text-overflow
+   属性整条出清，用户明令不要省略号；fit 由①登出钮退役释放 ≈52px 与④清空钮图标化
+   释放 ≈28px 保证——375 登录态名字可用宽 ≈191px≥全名 ≈160px+8 余量，
+   任务冻结线 111+32+44≈187 同过，明细=§十七.5；gap 压缩分支未触发）。
+   ④≤540 清空钮图标化：文字节点（span.clear-txt）display:none＋垃圾桶
+   SVG（.clear-ico）显示＋aria-label「清空对话」DOM 逐字在场＋40×40
+   触屏目标（≥40px 核）；>540 桌面文字态零改（SVG 基本态 display:none）。
+   批3 横幅与 §十五 的「fs-14 插档＋省略号截断」口径被本批取代（append-only
+   不改旧档，旧横幅内该英文字面=冻结 provenance 沿 §十六.4 先例保留）。
+   header gap/padding、#themeBtn/#railBtn/#statusDot 口径零改。
+   ============================================================ */
+/* ============ 三段式骨架：全宽横线 + 内容对齐同一 --col 网格（5.0 反馈批2 起 880px；原标题 720px 字面为历史口径） ============ */
+header, footer { padding-inline: max(16px, calc((100% - var(--col)) / 2)); }
+header {
+  background: var(--surface); border-bottom: 1px solid var(--line);
+  height: 56px; padding-block: 0; /* 2.0 §2.1：高度显式定 56px（原 padding-block 12px 实况收编为常数） */
+  display: flex; align-items: center; gap: 10px;
+  position: sticky; top: 0; z-index: 5; flex: none;
+}
+header .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--g-400); flex: none; position: relative; /* 3.0 §3.14 拍板④：V-1 外环定位上下文 */ }
+header .dot[data-state="ok"] { background: var(--ok); }
+header .dot[data-state="down"] { background: var(--err); }
+/* 3.0 §3.14 拍板④（断点三节31）：V-1 细实线同心外环——10px 点外一圈 1px 细环
+   （环心半径 9px、点半径 5px、间隙 3px，对齐素材档 V-1 比例 r8.4/r4.7）；
+   ok/down 两态同环（实环，非 V-2 断环）、环/点同色同通道（init 灰档同律）；
+   非文本豁免档（§四：色语义由点本体承担，环=形态冗余）；环禁任何动画/旋转
+   （素材档 V-1 实现注记明令）。 */
+header .dot::after {
+  content: ""; position: absolute; inset: -4px; border-radius: 50%;
+  border: 1px solid var(--g-400); /* box-sizing border-box（全局规则）：18px 总占位含 1px 环 */
+}
+header .dot[data-state="ok"]::after { border-color: var(--ok); }
+header .dot[data-state="down"]::after { border-color: var(--err); }
+header .name { font-weight: 600; font-size: var(--fs-15); letter-spacing: .04em; /* 3.0 §3.14 裁决 #26：.2px→.04em（masthead 字距口径）；字重/字号维持、不入衬线 */ }
+header .iconbtn {
+  margin-left: auto; width: 32px; height: 32px; border: none; background: none;
+  color: var(--ink-2); border-radius: var(--r-1); cursor: pointer;
+  display: grid; place-items: center; padding: 0;
+}
+header .iconbtn svg { width: 18px; height: 18px; }
+header .iconbtn .ico-sun { display: none; }
+:root[data-theme="dark"] header .iconbtn .ico-sun { display: block; }
+:root[data-theme="dark"] header .iconbtn .ico-moon { display: none; }
+/* 5.0 反馈批5：登出钮样式块随钮退役删除（原规则与 .clear 同款四行；
+   退役登记=差异清单 §十七.1，类名字面不复述守 grep 清零口径） */
+header .clear {
+  border: none; background: none; color: var(--ink-2);
+  font-size: var(--fs-13); cursor: pointer; padding: 4px 8px; border-radius: var(--r-1);
+}
+/* 5.0 反馈批5：清空钮图标化两态——桌面（>540）文字态零改=SVG 基本态隐藏；
+   ≤540 文字节点 display:none＋SVG 显示＋40×40 触屏目标（见下 ≤540 块；
+   aria-label「清空对话」DOM 面逐字在场，登记=差异清单 §十七.2） */
+header .clear .clear-ico { display: none; width: 18px; height: 18px; }
+main {
+  flex: 1; overflow-y: auto; padding: 8px max(12px, calc((100% - var(--col)) / 2));
+  scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent;
+  overscroll-behavior: contain;
+}
+main::-webkit-scrollbar { width: 8px; }
+main::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 4px; }
+main::-webkit-scrollbar-track { background: transparent; }
+main { display: flex; flex-direction: column; }
+.thread { max-width: 100%; margin: 0 auto; width: 100%; }
+.thread.empty { margin: auto auto; } /* 空状态垂直居中；内容超出时 margin 收零不碍滚动 */
+
+footer {
+  background: var(--surface); border-top: 1px solid var(--line);
+  padding-block: 10px;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom));
+}
+.codebar { display: none; gap: 8px; margin-bottom: 8px; }
+.codebar.show { display: flex; }
+.codebar input {
+  flex: 1; border: 1px solid var(--line-strong); border-radius: var(--r-2); padding: 9px 12px;
+  font-size: 16px; font-family: inherit; color: var(--ink); background: var(--surface-2); outline: none;
+}
+.codebar button, .row button.send {
+  border: none; background: var(--accent); color: #fff; border-radius: var(--r-2);
+  padding: 9px 16px; font-size: var(--fs-13); cursor: pointer; flex: none;
+}
+.row { display: flex; gap: 10px; align-items: flex-end; }
+.row textarea {
+  flex: 1; resize: none; border: 1px solid var(--line-strong); border-radius: var(--r-2);
+  padding: 10px 12px; font-size: 16px; font-family: inherit; outline: none;
+  max-height: 120px; line-height: 1.5; background: var(--surface-2); color: var(--ink);
+}
+.codebar input::placeholder, .row textarea::placeholder { color: var(--ink-3); opacity: 1; }
+.codebar input:focus, .row textarea:focus {
+  border-color: var(--focus);
+  box-shadow: var(--focus-ring); /* 3.0 §1.5 裁决 #33：复合值收编（值同现双环，行为零变化） */
+}
+.row button.send { height: 42px; min-width: 64px; }
+.row button.send:disabled { opacity: .5; }
+.disclaimer { text-align: center; color: var(--ink-3); font-size: var(--fs-12); padding: 6px 0 2px; }
+/* 备案区（2026-09-26 挂标→09-28 徽章带→3.0 T5 窄屏紧凑化→视觉5.0 T-b2
+   用户反馈批 2026-10-04 自然化终态）：卡片式徽章带退役→纯文本小字链接
+   单行居中。用户指令「自然一点、不要框」：徽章 border/background/box-shadow
+   全去（投影已随 T-b token 退役、描边+浅底本轮去）；容器带分隔 border-top
+   同随徽章带退役（无框无线无底）。fs-11（技术元数据档）/ink-3，hover
+   accent-ink+下划线；公安徽标 img 保留内联（高 14px，备案展示法规要求，
+   src/alt 零改）；ICP 徽章装饰盾牌内联 SVG 删除（App.vue 侧同批）。
+   375 单行静态估算：两链接合计 ≈291px < 343px 内容宽（footer
+   padding-inline 16px 两侧；fs-11 度量口径 CJK≈11px/字+数字窄体≈6px/字+
+   徽标 14px+gap），实测读数=检查点截图/硬口径早读数.json（icp 高≈单行、
+   两 <a> 同 y 轴、横滚 0）。备案链接契约（.icp 容器类+两 <a> 的
+   href/target/rel/文本）逐字保留零动。 */
+.icp { display: flex; flex-wrap: nowrap; justify-content: center; align-items: center;
+  gap: var(--sp-3); margin-top: 6px; padding: 2px 0 0; }
+.icp a { display: inline-flex; align-items: center; gap: 5px;
+  color: var(--ink-3); font-size: var(--fs-11); line-height: 1.4;
+  text-decoration: none; white-space: nowrap; }
+.icp a:hover { color: var(--accent-ink); text-decoration: underline; }
+.icp img.icp-icon { display: block; width: 14px; height: 14px; flex: none; }
+/* T5（2026-10-04）窄屏块：icp 紧凑规则随 T-b2 自然化删除（全视口单一
+   形态，375 单行不折行）；disclaimer 间距收紧档维持。--jump-b 窄屏兜底
+   静态值（message.css）随页脚变矮偏大——T-c 边界文件不动，运行时
+   ResizeObserver 实测覆写自愈（登记=差异清单 §十三）。 */
+@media (max-width: 540px) {
+  .disclaimer { padding: 6px 0 0; }
+  /* 5.0 反馈批3（2026-10-04）：header 名字物理单行——nowrap/hidden＋
+     min-width:0（flex 子件可收缩兜底，覆盖默认 min-width:auto——正是
+     登录态登出钮挤占时折 2 行的成因）。桌面 header .name 口径（fs-15/
+     字距 .04em）零改；375 预算读数=§十五。
+     5.0 反馈批5（2026-10-04）：fs-14→fs-16 再升档且省略号截断删除
+     （text-overflow 属性整条出清，用户明令不要省略号）；fit 由登出钮退役＋清空钮图标化
+     的空间释放保证（375 登录态名字可用宽 ≈191px≥全名 ≈160px+8 余量，
+     明细=§十七.5）；溢出兜底=hidden 裁切，任何长度名字不折行物理单行
+     口径不变（textContent 零波及不变） */
+  header .name {
+    font-size: var(--fs-16); white-space: nowrap;
+    overflow: hidden; min-width: 0;
+  }
+  /* 5.0 反馈批5：清空钮图标化（≤540）——文字节点（span.clear-txt）
+     display:none、垃圾桶 SVG（.clear-ico）显示、40×40 显式触屏目标
+     （≥40px 核线成立；flex:none 防 header flex 挤缩）；aria-label
+     「清空对话」DOM 面逐字在场（可及名两态一致）；桌面 >540 文字态零改
+     （SVG 基本态 display:none，见 header .clear 节） */
+  header .clear {
+    width: 40px; height: 40px; padding: 0; flex: none;
+    display: grid; place-items: center;
+  }
+  header .clear .clear-txt { display: none; }
+  header .clear .clear-ico { display: block; }
+}
+/* 回到底部浮钮（贴底滚动纪律：上滑即停跟随、滚回恢复）；
+   批0 变量化：--jump-b 默认 167px、窄屏 216px（语义与原两处硬编码等价） */
+:root { --jump-b: 167px; }
+.jump {
+  position: fixed; right: max(16px, calc((100% - var(--col)) / 2));
+  bottom: calc(var(--jump-b, 167px) + env(safe-area-inset-bottom)); /* 随页脚实际高度：徽章带单行页脚158px+9px 间隙 */
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 1px solid var(--line-strong); background: var(--surface);
+  color: var(--ink-2); cursor: pointer; display: none; place-items: center;
+  box-shadow: var(--shadow-pop); z-index: 6; padding: 0;
+} /* 暗色投影走 1.2 节 --shadow-pop 覆写（token 层自动） */
+/* 2.0 §3.13：≥1024px 右缘对齐算法随布局轨同步——fixed 百分比基于视口，
+   需显式扣除 264px 轨宽后对"剩余空间右缘"取半 */
+@media (min-width: 1024px) {
+  .jump { right: max(16px, calc((100vw - var(--rail-w) - var(--col)) / 2)); }
+  /* 5.0 反馈批2：桌面侧栏折叠态——rail 收零宽后内容列对全视口居中，
+     右缘对齐不再扣轨宽（.rail-collapsed 挂 .shell 根，#jumpBtn 为其下一
+     兄弟；登记=差异清单 §十四） */
+  .shell.rail-collapsed + .jump { right: max(16px, calc((100vw - var(--col)) / 2)); }
+}
+.jump.show { display: grid; }
+.jump svg { width: 16px; height: 16px; }
+/* 流式中发送钮变停止：中性描边样式，语义降饱和 */
+.row button.send.stop {
+  background: var(--surface); color: var(--ink-2); border: 1px solid var(--line-strong);
+}
+/* 导入询问条（非模态，挂 main 顶部 thread 之上；不抢焦点不阻塞输入与恢复链） */
+.import-bar {
+  flex: none; width: 100%; margin: 4px 0 12px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; flex-wrap: wrap; padding: 10px 14px;
+  border: 1px solid var(--tint-line); border-left: 3px solid var(--accent);
+  border-radius: var(--r-1); background: var(--accent-tint);
+}
+.import-bar-main { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.import-bar-txt { font-size: var(--fs-13); color: var(--accent-ink); line-height: 1.5; }
+.import-bar-err { font-size: var(--fs-12); color: var(--ink-2); line-height: 1.4; }
+.import-bar-btns { display: flex; gap: 8px; flex: none; }
+.import-btn {
+  border: 1px solid var(--tint-line); background: var(--surface); color: var(--accent-ink);
+  font-size: var(--fs-13); font-family: inherit; border-radius: var(--r-1);
+  padding: 5px 12px; cursor: pointer; line-height: 1.4; flex: none;
+}
+.import-btn.pri { background: var(--accent); color: #fff; border-color: transparent; }
+.import-btn:disabled { opacity: .45; cursor: default; }
+
+/* ============================================================
+   视觉 5.0 T-b（2026-10-04）：hero 空状态 IA 重构（居中极简+建议 chips）
+   ＋ T-b2 用户反馈批（2026-10-04 检查点后）：hero 二次裁剪
+   ------------------------------------------------------------
+   施工依据=/home/jieliu/qa-bot/运营/视觉5.0-现代极简-20261004/基调-5.0.md §③
+   （材质终值：卡片投影 token 退役→「细线+浅底」两件套、圆角 8/12/16 随
+   --r-1/2/3 变量消费）+决策/ADR-0017-视觉5.0现代极简改版.md 决策③④⑥；
+   替代 4.0 方向一左对齐刊头+三内容卡全套（删除类名穷举与文案逐条登记=
+   运营/视觉5.0-现代极简-20261004/T-b-DOM差异清单.md）。
+   T-b2 依据=用户实见检查点四张空态截图后指令①：去掉眉题件与其上 logo
+   标记件——两件 DOM+CSS 整体删除（类名与随删文案并入差异清单 §十三
+   删除清单，现 15 枚），旧类名字面本文件刻意不复述（grep 清零口径）。
+   形态（T-b2 终态）：居中纵列=.hero-title 主标题（无衬线 semibold——
+   衬线管线随 5.0 退役，主标题禁消费 display 衬线 token；title 成视觉
+   起点，顶部留白适度回收 padding-top 24→16px，双视口首屏余量只增不减）→
+   .hero-chips 建议 chips 一排（flex wrap 居中；chip=细线 --line+浅底
+   --surface 两件套零投影、圆角 r-2；hover 沿 4.0 chip 交互语言：描边转
+   --focus+底浅化 surface-2+字转 accent-ink，瞬时切换零转场=动效允许
+   清单不扩）。挂点维持 .thread.empty 内唯一子容器（垂直居中维持）；
+   点击填入契约逐字保持（App.vue 委托检 .hero-chip、取 .hero-chip-txt
+   文本填入 #input 不发送）。
+   ≤540 密排沿 4.0 用户拍板口径：hero-title fs-20（「小字一屏装下」）+
+   chips 自然换行（chip max-width:100% 长问句折行兜底=375 横滚 0）；
+   验收=375×667 首屏 hero 全件（标题/chips）+输入区完整可见
+   （Playwright 实测=检查点截图-5.0.py 覆拍读数）。
+   ============================================================ */
+.hero {
+  text-align: center;
+  padding: 16px 12px 8px; /* 现代极简大留白；T-b2 裁剪后 title 成视觉起点、顶距适度回收 24→16px（空态由 .thread.empty margin auto 垂直居中，此处仅呼吸位） */
+  max-width: var(--col);
+  margin: 0 auto;
+}
+.hero-title { /* 主标题：无衬线 semibold fs-32/1.3（ADR-0017 决策③衬线退役；W1 文案写死 App.vue 模板）；≤540 断点 fs-20 密排（见下，用户拍板沿 4.0 口径） */
+  font-weight: 600; font-size: var(--fs-32); line-height: 1.3;
+  color: var(--ink); margin: 0 auto 28px;
+}
+.hero-chips { /* 建议 chips 一排：flex wrap 居中；桌面单行或自然换行、375 换行不横滚 */
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;
+}
+.hero-chip { /* 轻量建议 chip：细线+浅底两件套零投影（基调-5.0 §③ 卡片投影 token 退役消费面之一）；圆角 r-2 */
+  max-width: 100%; /* 375 长问句在 chip 内折行兜底（横滚 0 硬口径） */
+  border: 1px solid var(--line); border-radius: var(--r-2); background: var(--surface);
+  padding: 7px 14px; cursor: pointer; font-family: inherit;
+  text-align: center; white-space: normal;
+}
+.hero-chip-txt { /* 问句字串：sans fs-13/ink-2 轻量档（chips=轻量建议非内容卡，较 4.0 卡内 fs-15 降一档）；点击填入 #input 不发送（行为契约逐字沿 T2 §三） */
+  font-size: var(--fs-13); color: var(--ink-2); line-height: 1.5;
+}
+.hero-chip:active { background: var(--surface-2); } /* active 底 surface-2（4.0 内容卡口径平移） */
+@media (hover: hover) { /* 桌面 hover 浅化（4.0 chip 交互语言沿袭；原同款三件的追问 chip 已随 5.0 反馈批4 退役，见差异清单 §十六）：描边转 --focus、底转 surface-2、字转 accent-ink；瞬时切换零转场（允许清单不扩） */
+  .hero-chip:hover { border-color: var(--focus); background: var(--surface-2); }
+  .hero-chip:hover .hero-chip-txt { color: var(--accent-ink); }
+}
+@media (max-width: 540px) {
+  /* ≤540 空态密排（沿 4.0 用户拍板口径）：title fs-20+间距收一档+chips 密排
+     ——保「hero 全件+输入区」同进 375×667 首屏且余量放大（T-b2 裁剪后
+     眉题/logo 件已退，首屏余量只增不减）；字串零改动，仅排版密度档。 */
+  .hero { padding-top: 8px; }
+  .hero-title { font-size: var(--fs-20); line-height: 1.3; margin-bottom: 16px; }
+  .hero-chips { gap: 6px; }
+  .hero-chip { padding: 6px 12px; }
+}

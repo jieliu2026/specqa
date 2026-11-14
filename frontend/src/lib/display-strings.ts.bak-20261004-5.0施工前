@@ -1,0 +1,51 @@
+/* ============================================================
+   视觉 3.0 T1（2026-10-04）：display 衬线层字盘常量表（文案真源）
+   ------------------------------------------------------------
+   真源链：/home/jieliu/qa-bot/运营/视觉3.0-20261004/基调稿与组件语言-3.0.md
+   §1.3「衬线白名单穷举制」（冻结）+ 素材-字盘清单.md（204 字实测）；
+   拍板链=断点三节 31（2026-10-04）。
+
+   白名单穷举制（宪法四-2 硬预算，清单外任何面禁 var(--font-display)）：
+     W1 = 空状态 masthead 主标题（§3.9，fs-32/600，≤540 断点 fs-28）
+     W2 = blockquote 首段装饰大引号（§3.2 裁决 #14，CSS content 单字形）
+     W3 = 未来静态页（关于/说明）标题——预留位，未实装不占预算
+   动态文本一律禁衬线（AI 正文/标题/表格、会话标题、追问 chip、预览摘录、
+   错误/提示文案、时间戳）；字号下限 ≥20px；白名单增删须拍板登记。
+
+   字盘单源纪律（§1.3）：display 子集字盘从本表生成口径收口（素材档 204 字
+   全字盘为默认超集）；构建期校验（vite.config.ts displayFontGuard 插件）=
+   本表全字符必须命中 src/assets/fonts/display-serif-600.woff2 的 cmap，
+   缺字即构建失败——防「文案新增字不在子集→两副字形混排」（B-⑤2）。
+   本文件消费方：T2 空状态 masthead（App.vue hero 件）；W2 字形由 T3
+   markdown.css 以 CSS content 消费（CSS 取字面量，本表条目作校验输入）。
+   ============================================================ */
+
+/** W1：空状态 masthead 主标题——App.vue 空状态欢迎语现行串
+ *  （素材档 §一 层判「是」；含品牌词 qa-bot，B-⑤7 口径允许品牌词整体衬线）。 */
+export const W1_MASTHEAD_TITLE =
+  '你好，这里是 qa-bot——无线网络优化工程师的问答机，有什么想问的尽管说。';
+
+/** W2：blockquote 首段装饰大引号——CSS content 单字形（§3.2，1.6em≈26px）。 */
+export const W2_QUOTE_OPEN = '\u201C'; /* “ */
+
+/** 品牌词拉丁（qa-bot，B-⑤7）：W1 串内已含；独立登记供未来品牌位
+ *  （如空状态落款，裁决 #36 留档）启用时零漂移。 */
+export const BRAND_LATIN = 'qa-bot';
+
+/** 排版预留引号对（基调稿 §1.3 字盘口径：子集已收录；W2 若启用闭合
+ *  引号/单引号变体零再生成本）。 */
+export const RESERVED_QUOTES = '\u201C\u201D\u2018\u2019'; /* “”‘’ */
+
+/** W3：未来静态页（关于/说明）标题预留位——未实装，空数组不占预算；
+ *  启用时须先拍板登记并把字串填入本表（构建校验自动覆盖新字符）。 */
+export const W3_RESERVED: readonly string[] = [];
+
+/** 校验面：白名单消费字串全并集（构建期 cmap 命中校验输入，
+ *  displayFontGuard 逐字符比对子集 cmap）。 */
+export const DISPLAY_CHARSET: readonly string[] = [
+  W1_MASTHEAD_TITLE,
+  W2_QUOTE_OPEN,
+  BRAND_LATIN,
+  RESERVED_QUOTES,
+  ...W3_RESERVED,
+];

@@ -1,0 +1,133 @@
+/* ============================================================
+   视觉 3.0 · T0.5 拆分（2026-10-04）
+   来源=base.css 横切面（动效/指针模态）：
+   - button:focus-visible 通用焦点环（原 L243-246）
+   - @keyframes blink/pulse（原 L261/269；引用它们的 .typing::after 与
+     .waiting::after 规则在 message.css——命名引用与顺序无关）
+   - 全部 hover 悬浮态与 hover:none 触屏模态媒体块（原 L310-324、L461-463、
+     L500-506、L584-586、L600-606、L673-677）——因跨模块混合选择器按
+     「媒体块整块不拆」纪律整块收编于此
+   - 全部 @media (hover:hover) 转场允许清单（原 L329-337、L608-614、L678-684）
+   - prefers-reduced-motion 让位块（原 L338-341）
+   纯搬运：零 token 改值、零 DOM 改动；块间保持原 base.css 出现顺序。
+   本件在六件中最后加载：hover 伪类特异度高于基础规则，且让位/覆写类
+   同特异度对（.typing::after、.waiting::after、.rail-item-del）原序即
+   先基后覆，加载序不变。
+   ============================================================ */
+/* ============================================================
+   视觉 3.0 · T5 施工（2026-10-04）：微观与移动打磨
+   真源=运营/视觉3.0-20261004/基调稿与组件语言-3.0.md + 九张截图诊断；
+   决策=过程日志三节31。本件改动面：①死样式清理——.chip:hover 一行与首段
+   转场允许清单 .chip 条目删除（DOM 零消费证明见 message.css T5 横幅；
+   第二清单追问 chip 条目与其 hover 行当时保留，2026-10-04 反馈批2-4
+   修复轮随批4 退役一并出清=死规则清零）；②hover:none 触控面
+   .act-bar .act-btn 与 .srcs .srcs-x 热区补齐至 ≥44px（padding 补齐、
+   视觉低调度不变=仍无边框无底色幽灵款；桌面 hover 特效零波及）。
+   ============================================================ */
+/* ============================================================
+   视觉 5.0 · 批5 微修（2026-10-04）：死规则出清（跨边界尾巴出清）
+   依据=差异清单 §17.7 跨边界登记→§十八 施工。header 登出钮已随批5
+   退役（App.vue DOM 整体删除＋skeleton.css 样式块删除），本文件残留
+   两处死规则=hover 块「header 登出钮」选择器与转场允许清单对应条目
+   （DOM 零匹配），本次整体出清；守 grep 清零口径，本件注释一律不复述
+   该类名字面。header .clear 的 hover/过渡两处仍在役消费（.clear 类
+   保留，§17.2 零波及）。其余规则零动。
+   ============================================================ */
+button:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring); /* 3.0 §1.5 裁决 #33：复合值收编（值同现双环，行为零变化） */
+}
+@keyframes blink { 50% { opacity: 0; } }
+@keyframes pulse { 50% { opacity: .2; } }
+@media (hover: hover) {
+  header .iconbtn:hover { background: var(--g-100); color: var(--ink); }
+  header .railbtn:hover { background: var(--g-100); color: var(--ink); }
+  header .clear:hover { background: var(--g-100); color: var(--ink); } /* 批5微修：登出钮 hover 条目随本行出清（死规则，§十八） */
+  .codebar button:hover, .row button.send:not(.stop):not(:disabled):hover { background: var(--accent-hover); }
+  /* T5（2026-10-04）死样式出清：.chip:hover 原在此一行，随空状态 hero 化删除 */
+  /* 2.0 §3.4：出处 chip 悬浮态（tap 为主模态，hover 为桌面增强） */
+  .srcs .srcs-it:hover { border-color: var(--focus); color: var(--accent-ink); }
+  .srcs .srcs-x:hover { color: var(--accent-ink); }
+  /* 2.0 §3.7：恒深面上复制钮 hover（底 --code-line、字 --code-ink） */
+  .cb-copy:hover { background: var(--code-line); color: var(--code-ink); }
+  .jump:hover { color: var(--accent-ink); border-color: var(--focus); }
+  .row button.send.stop:hover { border-color: var(--focus); color: var(--accent-ink); }
+  .icp a:hover { border-color: var(--focus); }
+}
+/* ============ 2.0 §1.6 动效允许清单（穷举制）：hover 底/描边/前景色转场收编
+   --dur-2（≤120ms，ease-out）；清单外一律禁（无滑出/淡入/spring）。
+   允许清单内的 typing blink 1s 与 waiting 三点脉冲 1.2s 见上方 keyframes；
+   prefers-reduced-motion 时全部让位（唯一动效面即这两枚无限脉冲） ============ */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  header .iconbtn, header .railbtn, header .clear,
+  .codebar button, .row button.send, .srcs .srcs-it, .srcs .srcs-x,
+  .cb-copy, .act-bar .act-btn, .jump, .icp a { /* T5：.chip 条目随死样式出清删除；批5：登出钮条目随死规则出清（§十八） */
+    transition: background-color var(--dur-2) ease-out,
+                border-color var(--dur-2) ease-out,
+                color var(--dur-2) ease-out;
+  }
+}
+/* T5（2026-10-04）reduced-motion 复核结论（登记，无代码动作）：
+   现动效面穷举=blink（.typing::after）+pulse（.waiting::after）两枚无限
+   脉冲——让位块全覆盖 ✓；全部 hover 色彩转场三段清单本就门控于
+   (prefers-reduced-motion: no-preference)，reduce 下自动不生效 ✓；
+   T3 新增表格行 hover（markdown.css）=瞬时状态切换零转场（§1.6/#28），
+   瞬时切换无运动量无需让位 ✓；T5 触控热区 padding 为静态尺寸同无需让位 ✓。
+   全仓 keyframes/animation 仅 motion.css 两枚+message.css 两处引用
+   （grep 2026-10-04 复核），BotMessage.vue 无样式块。 */
+@media (prefers-reduced-motion: reduce) {
+  .typing::after { animation: none; }
+  .msg.bot .txt.waiting::after { animation: none; }
+}
+@media (hover: none) {
+  /* T5（2026-10-04）：触控目标 ≥44px 补齐（hover:none 触屏主模态面；桌面
+     零波及）。.act-bar .act-btn：12px×1.4+2×14=44.8px（原 22.8px）；
+     .srcs .srcs-x：12px×1.6+2×13=45.2px（原 27.2px）。padding/line-height
+     口径补齐、视觉低调度不变（仍无边框无底色），对齐 hover:none 恒显
+     先例（.rail-item-del/.rail-item-ren）；追问 chip/.srcs-it 未入本批
+     施工清单（报告登记待后续批次；追问 chip 已随批4 退役出清）。 */
+  .act-bar .act-btn { padding: 14px 10px; }
+  .srcs .srcs-x { padding: 13px 8px; }
+}
+@media (hover: hover) {
+  .act-bar .act-btn:not(:disabled):hover { background: var(--g-100); color: var(--ink-2); } /* 2.0：hover 转 ink-2（低调档） */
+}
+/* 触屏模态：卡片对指针透明——被卡片盖住的相邻 chip 可直接点穿切换（同消息
+   单卡语义不因遮挡断路）。代价=卡内触摸滚动不可用，quote 前端截 200 字在
+   320px 宽内基本可整读；溢出以 overflow hidden 收口（视觉钳制） */
+@media (hover: none) {
+  .pv-card { pointer-events: none; }
+  .pv-card .pv-quote { overflow-y: hidden; }
+}
+@media (hover: none) {
+  .rail-item-del { opacity: 1; } /* 触屏无 hover：删除钮恒显（可达性） */
+}
+@media (hover: hover) {
+  .rail-new:not(:disabled):hover { background: var(--surface-2); }
+  .rail-item:hover { background: var(--g-100); }
+  .rail-item.active:hover { background: var(--accent-tint); }
+  .rail-item-del:not(:disabled):hover { background: var(--g-100); color: var(--err); }
+}
+/* 1.6 动效允许清单增补（新交互面入列：底/描边/前景色 ≤120ms 纪律同守） */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .rail-new, .rail-item, .rail-item-del {
+    transition: background-color var(--dur-2) ease-out,
+                border-color var(--dur-2) ease-out,
+                color var(--dur-2) ease-out;
+  }
+}
+@media (hover: none) {
+  .rail-item-ren { opacity: 1; } /* 触屏无 hover：重命名钮恒显（可达性，对齐删除钮） */
+}
+@media (hover: hover) {
+  .import-btn:not(:disabled):hover { background: var(--surface-2); }
+  .import-btn.pri:not(:disabled):hover { background: var(--accent-hover); }
+  .rail-item-ren:not(:disabled):hover { background: var(--g-100); color: var(--accent-ink); }
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .import-btn, .rail-item-ren {
+    transition: background-color var(--dur-2) ease-out,
+                border-color var(--dur-2) ease-out,
+                color var(--dur-2) ease-out;
+  }
+}

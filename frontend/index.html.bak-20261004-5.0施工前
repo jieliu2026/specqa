@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#ffffff">
+<!-- 批次F（2026-10-03）：favicon=内联 SVG data URI（accent 色问号气泡，
+     零外部请求守宪铁律）；meta description+og:title/og:description（无外链图）。
+     视觉 4.0 方向一 T-c（2026-10-04）：气泡/尾巴两处 fill 随 accent 600 档
+     换信号橙 #cc440f（断点拍板，派生组联动件跟 600 档走；theme-color meta=
+     亮暗 chrome 底色非强调色，不动） -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='52' rx='14' fill='%23cc440f'/%3E%3Cpath d='M18 50l6 12 10-11z' fill='%23cc440f'/%3E%3Ctext x='32' y='37' font-family='Arial,Helvetica,sans-serif' font-size='32' font-weight='700' fill='%23fff' text-anchor='middle'%3E%3F%3C/text%3E%3C/svg%3E">
+<meta name="description" content="qa-bot——无线网优工程师的问答机，答案附原文出处。">
+<meta property="og:title" content="网优工程师的qa-bot">
+<meta property="og:description" content="qa-bot——无线网优工程师的问答机，答案附原文出处。">
+<meta property="og:type" content="website">
+<title>网优工程师的qa-bot</title>
+<!-- 视觉 3.0 T1（2026-10-04）：display 衬线子集自托管预载（防 FOUT；真源=基调稿 §1.3，构建后由 Vite 哈希重写同源地址，零 CDN） -->
+<link rel="preload" as="font" type="font/woff2" crossorigin href="/src/assets/fonts/display-serif-600.woff2">
+<script>
+/* 防首帧闪烁：localStorage（手动选择）> 系统偏好，首帧前把主题挂到 <html>；
+   受限 webview 访问 localStorage 抛 SecurityError，统一兜底 */
+(function () {
+  var t = null;
+  try { t = localStorage.getItem('qabot_theme'); } catch (e) {}
+  if (t !== 'light' && t !== 'dark') {
+    t = (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+  }
+  document.documentElement.dataset.theme = t;
+  var m = document.querySelector('meta[name="theme-color"]');
+  if (m) m.content = (t === 'dark') ? '#1e1e1e' : '#ffffff';
+})();
+</script>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

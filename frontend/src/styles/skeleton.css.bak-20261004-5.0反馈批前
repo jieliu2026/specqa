@@ -1,0 +1,244 @@
+/* ============================================================
+   视觉 3.0 · T0.5 拆分（2026-10-04）
+   来源=base.css「三段式骨架」节：header/main/thread（原 L138-177）、
+   footer/codebar/row/disclaimer/icp（原 L217-259，button:focus-visible
+   通用焦点环归 motion.css）、jump 回底浮钮与 --jump-b 基础定义
+   （原 L282-299，540px 窄屏覆写媒体块整块在 message.css——skeleton
+   先于 message 加载，先基后覆保持）、send.stop（原 L306-309）、
+   import-bar 导入条（原 L619-637，二期批次B/C 节）。
+   纯搬运：零 token 改值、零 DOM 改动；文件内规则保持原 base.css 出现顺序。
+   ============================================================ */
+/* ============================================================
+   视觉 3.0 · T5 施工（2026-10-04）：微观与移动打磨
+   真源=运营/视觉3.0-20261004/基调稿与组件语言-3.0.md + 九张现状截图
+   诊断欠账；拍板=断点三节31。本件改动面：≤540 断点 .icp 徽章带紧凑化
+   （§3.12 全维持+移动端精简：双徽章尽量同行、flex-wrap 保底，纯 CSS
+   不删元素不改 DOM）+disclaimer 与 icp 间距收紧一档。jump 浮钮 36px
+   维持（非高频件+浮钮惯例，登记不扩）。
+   ============================================================ */
+/* ============ 三段式骨架：全宽横线 + 内容对齐同一 720px 网格 ============ */
+header, footer { padding-inline: max(16px, calc((100% - var(--col)) / 2)); }
+header {
+  background: var(--surface); border-bottom: 1px solid var(--line);
+  height: 56px; padding-block: 0; /* 2.0 §2.1：高度显式定 56px（原 padding-block 12px 实况收编为常数） */
+  display: flex; align-items: center; gap: 10px;
+  position: sticky; top: 0; z-index: 5; flex: none;
+}
+header .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--g-400); flex: none; position: relative; /* 3.0 §3.14 拍板④：V-1 外环定位上下文 */ }
+header .dot[data-state="ok"] { background: var(--ok); }
+header .dot[data-state="down"] { background: var(--err); }
+/* 3.0 §3.14 拍板④（断点三节31）：V-1 细实线同心外环——10px 点外一圈 1px 细环
+   （环心半径 9px、点半径 5px、间隙 3px，对齐素材档 V-1 比例 r8.4/r4.7）；
+   ok/down 两态同环（实环，非 V-2 断环）、环/点同色同通道（init 灰档同律）；
+   非文本豁免档（§四：色语义由点本体承担，环=形态冗余）；环禁任何动画/旋转
+   （素材档 V-1 实现注记明令）。 */
+header .dot::after {
+  content: ""; position: absolute; inset: -4px; border-radius: 50%;
+  border: 1px solid var(--g-400); /* box-sizing border-box（全局规则）：18px 总占位含 1px 环 */
+}
+header .dot[data-state="ok"]::after { border-color: var(--ok); }
+header .dot[data-state="down"]::after { border-color: var(--err); }
+header .name { font-weight: 600; font-size: var(--fs-15); letter-spacing: .04em; /* 3.0 §3.14 裁决 #26：.2px→.04em（masthead 字距口径）；字重/字号维持、不入衬线 */ }
+header .iconbtn {
+  margin-left: auto; width: 32px; height: 32px; border: none; background: none;
+  color: var(--ink-2); border-radius: var(--r-1); cursor: pointer;
+  display: grid; place-items: center; padding: 0;
+}
+header .iconbtn svg { width: 18px; height: 18px; }
+header .iconbtn .ico-sun { display: none; }
+:root[data-theme="dark"] header .iconbtn .ico-sun { display: block; }
+:root[data-theme="dark"] header .iconbtn .ico-moon { display: none; }
+header .clear {
+  border: none; background: none; color: var(--ink-2);
+  font-size: var(--fs-13); cursor: pointer; padding: 4px 8px; border-radius: var(--r-1);
+}
+header .logout {
+  border: none; background: none; color: var(--ink-2);
+  font-size: var(--fs-13); cursor: pointer; padding: 4px 8px; border-radius: var(--r-1);
+}
+main {
+  flex: 1; overflow-y: auto; padding: 8px max(12px, calc((100% - var(--col)) / 2));
+  scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent;
+  overscroll-behavior: contain;
+}
+main::-webkit-scrollbar { width: 8px; }
+main::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 4px; }
+main::-webkit-scrollbar-track { background: transparent; }
+main { display: flex; flex-direction: column; }
+.thread { max-width: 100%; margin: 0 auto; width: 100%; }
+.thread.empty { margin: auto auto; } /* 空状态垂直居中；内容超出时 margin 收零不碍滚动 */
+
+footer {
+  background: var(--surface); border-top: 1px solid var(--line);
+  padding-block: 10px;
+  padding-bottom: calc(10px + env(safe-area-inset-bottom));
+}
+.codebar { display: none; gap: 8px; margin-bottom: 8px; }
+.codebar.show { display: flex; }
+.codebar input {
+  flex: 1; border: 1px solid var(--line-strong); border-radius: var(--r-2); padding: 9px 12px;
+  font-size: 16px; font-family: inherit; color: var(--ink); background: var(--surface-2); outline: none;
+}
+.codebar button, .row button.send {
+  border: none; background: var(--accent); color: #fff; border-radius: var(--r-2);
+  padding: 9px 16px; font-size: var(--fs-13); cursor: pointer; flex: none;
+}
+.row { display: flex; gap: 10px; align-items: flex-end; }
+.row textarea {
+  flex: 1; resize: none; border: 1px solid var(--line-strong); border-radius: var(--r-2);
+  padding: 10px 12px; font-size: 16px; font-family: inherit; outline: none;
+  max-height: 120px; line-height: 1.5; background: var(--surface-2); color: var(--ink);
+}
+.codebar input::placeholder, .row textarea::placeholder { color: var(--ink-3); opacity: 1; }
+.codebar input:focus, .row textarea:focus {
+  border-color: var(--focus);
+  box-shadow: var(--focus-ring); /* 3.0 §1.5 裁决 #33：复合值收编（值同现双环，行为零变化） */
+}
+.row button.send { height: 42px; min-width: 64px; }
+.row button.send:disabled { opacity: .5; }
+.disclaimer { text-align: center; color: var(--ink-3); font-size: var(--fs-12); padding: 6px 0 2px; }
+/* 备案信任徽章带（2026-09-26 挂标、09-28 放大为徽章带）：页脚独立视觉带，
+   两枚徽章卡（边框+圆角+淡底）横排居中、窄屏竖排；全走既有 token 明暗自适 */
+.icp { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 14px;
+  margin-top: 8px; padding: 10px 0 2px; border-top: 1px solid var(--line); }
+.icp a { display: inline-flex; align-items: center; gap: 7px;
+  padding: 8px 16px; border: 1px solid var(--tint-line); border-radius: var(--r-2);
+  background: var(--accent-tint); color: var(--accent-tink);
+  font-size: var(--fs-15); font-weight: 600; line-height: 1.4; text-decoration: none; }
+  /* 视觉5.0 T-b（2026-10-04，基调-5.0 §③/ADR-0017 决策②⑥）：卡片投影 token 退役
+     ——icp 徽章改「细线+浅底」两件套（tint-line 描边+accent-tint 浅底零投影） */
+.icp .icp-icon { display: inline-block; width: 20px; height: 20px; flex: none; color: inherit; }
+.icp img.icp-icon { width: 24px; height: 24px; }
+/* T5（2026-10-04）：≤540 断点徽章带紧凑形态（九张截图诊断欠账：双备案徽章
+   375 纵排两行底部笨重）。降档项：字号 fs-15→fs-12、内边距 8/16→5/10、
+   行/列间距 10/14→6/8、图标 20/24→16/18、icp 容器 padding 10/2→8/0、
+   徽章高 42→30px；双徽章合计宽 ≈389px，≈421px 以上视口可同行（字体
+   度量估算值，原临界 520-560 下移；实机截图验收归后续批次），375-420
+   仍两行但每行矮 12px（flex-wrap 保底不删元素不改 DOM）。disclaimer 与
+   icp 间距收紧一档：合计 10px（disclaimer 底 2+icp 顶 margin 8）→6px
+   （0+6，一档=4px 基数一步；disclaimer 自身顶距不动）。页脚窄屏两行态
+   ≈169px（原 ≈207），--jump-b 窄屏兜底值随调（见 message.css）；
+   App.vue:796 ResizeObserver 实测覆写为运行时真值。 */
+@media (max-width: 540px) {
+  .disclaimer { padding: 6px 0 0; }
+  .icp { gap: 6px 8px; margin-top: 6px; padding: 8px 0 0; }
+  .icp a { padding: 5px 10px; font-size: var(--fs-12); gap: 5px; }
+  .icp .icp-icon { width: 16px; height: 16px; }
+  .icp img.icp-icon { width: 18px; height: 18px; }
+}
+/* 回到底部浮钮（贴底滚动纪律：上滑即停跟随、滚回恢复）；
+   批0 变量化：--jump-b 默认 167px、窄屏 216px（语义与原两处硬编码等价） */
+:root { --jump-b: 167px; }
+.jump {
+  position: fixed; right: max(16px, calc((100% - var(--col)) / 2));
+  bottom: calc(var(--jump-b, 167px) + env(safe-area-inset-bottom)); /* 随页脚实际高度：徽章带单行页脚158px+9px 间隙 */
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 1px solid var(--line-strong); background: var(--surface);
+  color: var(--ink-2); cursor: pointer; display: none; place-items: center;
+  box-shadow: var(--shadow-pop); z-index: 6; padding: 0;
+} /* 暗色投影走 1.2 节 --shadow-pop 覆写（token 层自动） */
+/* 2.0 §3.13：≥1024px 右缘对齐算法随布局轨同步——fixed 百分比基于视口，
+   需显式扣除 264px 轨宽后对"剩余空间右缘"取半 */
+@media (min-width: 1024px) {
+  .jump { right: max(16px, calc((100vw - var(--rail-w) - var(--col)) / 2)); }
+}
+.jump.show { display: grid; }
+.jump svg { width: 16px; height: 16px; }
+/* 流式中发送钮变停止：中性描边样式，语义降饱和 */
+.row button.send.stop {
+  background: var(--surface); color: var(--ink-2); border: 1px solid var(--line-strong);
+}
+/* 导入询问条（非模态，挂 main 顶部 thread 之上；不抢焦点不阻塞输入与恢复链） */
+.import-bar {
+  flex: none; width: 100%; margin: 4px 0 12px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; flex-wrap: wrap; padding: 10px 14px;
+  border: 1px solid var(--tint-line); border-left: 3px solid var(--accent);
+  border-radius: var(--r-1); background: var(--accent-tint);
+}
+.import-bar-main { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.import-bar-txt { font-size: var(--fs-13); color: var(--accent-ink); line-height: 1.5; }
+.import-bar-err { font-size: var(--fs-12); color: var(--ink-2); line-height: 1.4; }
+.import-bar-btns { display: flex; gap: 8px; flex: none; }
+.import-btn {
+  border: 1px solid var(--tint-line); background: var(--surface); color: var(--accent-ink);
+  font-size: var(--fs-13); font-family: inherit; border-radius: var(--r-1);
+  padding: 5px 12px; cursor: pointer; line-height: 1.4; flex: none;
+}
+.import-btn.pri { background: var(--accent); color: #fff; border-color: transparent; }
+.import-btn:disabled { opacity: .45; cursor: default; }
+
+/* ============================================================
+   视觉 5.0 T-b（2026-10-04）：hero 空状态 IA 重构（居中极简+建议 chips）
+   ------------------------------------------------------------
+   施工依据=/home/jieliu/qa-bot/运营/视觉5.0-现代极简-20261004/基调-5.0.md §③
+   （材质终值：卡片投影 token 退役→「细线+浅底」两件套、圆角 8/12/16 随
+   --r-1/2/3 变量消费）+决策/ADR-0017-视觉5.0现代极简改版.md 决策③④⑥；
+   替代 4.0 方向一左对齐刊头+三内容卡全套（删除类名穷举与文案逐条登记=
+   运营/视觉5.0-现代极简-20261004/T-b-DOM差异清单.md）。
+   形态：居中纵列=.hero-emblem logo 标记（内联 SVG 单色 --accent=5.0 唯一
+   强调色落点，L-2 印章·Q 图形零改动零新资产）→.hero-kicker 眉题→
+   .hero-title 主标题（无衬线 semibold——衬线管线随 5.0 退役，主标题禁消费
+   display 衬线 token）→.hero-chips 建议 chips 一排（flex wrap 居中；
+   chip=细线 --line+浅底 --surface 两件套零投影、圆角 r-2；hover 沿 4.0
+   chip 交互语言：描边转 --focus+底浅化 surface-2+字转 accent-ink，瞬时
+   切换零转场=动效允许清单不扩）。挂点维持 .thread.empty 内唯一子容器
+   （垂直居中维持）；点击填入契约逐字保持（App.vue 委托改检 .hero-chip、
+   取 .hero-chip-txt 文本填入 #input 不发送）。
+   ≤540 密排沿 4.0 用户拍板口径：hero-title fs-20（「小字一屏装下」）+
+   chips 自然换行（chip max-width:100% 长问句折行兜底=375 横滚 0）；
+   验收=375×667 首屏 hero 全件（logo/眉题/标题/chips）+输入区完整可见
+   （居中极简+chips 天然比三内容卡矮，余量大于 4.0 口径；Playwright 实测
+   归合流后 T-d）。
+   ============================================================ */
+.hero {
+  text-align: center;
+  padding: 24px 12px 8px; /* 现代极简大留白（顶距放大；空态由 .thread.empty margin auto 垂直居中，此处仅呼吸位） */
+  max-width: var(--col);
+  margin: 0 auto;
+}
+.hero-emblem { /* logo 标记（内联 SVG 单色 --accent，currentColor 通道沿 L-2 印章·Q 契约；4.0 左置改居中） */
+  color: var(--accent);
+  margin: 0 0 20px;
+}
+.hero-emblem svg {
+  display: block; margin: 0 auto;
+  width: 40px; height: 40px; /* 40px 维持（4.0 档）；≤540 降 32px */
+}
+.hero-kicker { /* 眉题：fs-11/.12em/uppercase/ink-3（文案「3GPP 规范问答」零改；4.0 题文纵列内改居中枢题上置） */
+  font-size: var(--fs-11); letter-spacing: .12em; text-transform: uppercase;
+  font-weight: 500; color: var(--ink-3); margin-bottom: 12px;
+}
+.hero-title { /* 主标题：无衬线 semibold fs-32/1.3（ADR-0017 决策③衬线退役；W1 文案写死 App.vue 模板）；≤540 断点 fs-20 密排（见下，用户拍板沿 4.0 口径） */
+  font-weight: 600; font-size: var(--fs-32); line-height: 1.3;
+  color: var(--ink); margin: 0 auto 28px;
+}
+.hero-chips { /* 建议 chips 一排：flex wrap 居中；桌面单行或自然换行、375 换行不横滚 */
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 8px;
+}
+.hero-chip { /* 轻量建议 chip：细线+浅底两件套零投影（基调-5.0 §③ 卡片投影 token 退役消费面之一）；圆角 r-2 */
+  max-width: 100%; /* 375 长问句在 chip 内折行兜底（横滚 0 硬口径） */
+  border: 1px solid var(--line); border-radius: var(--r-2); background: var(--surface);
+  padding: 7px 14px; cursor: pointer; font-family: inherit;
+  text-align: center; white-space: normal;
+}
+.hero-chip-txt { /* 问句字串：sans fs-13/ink-2 轻量档（chips=轻量建议非内容卡，较 4.0 卡内 fs-15 降一档）；点击填入 #input 不发送（行为契约逐字沿 T2 §三） */
+  font-size: var(--fs-13); color: var(--ink-2); line-height: 1.5;
+}
+.hero-chip:active { background: var(--surface-2); } /* active 底 surface-2（4.0 内容卡口径平移） */
+@media (hover: hover) { /* 桌面 hover 浅化（4.0 chip 交互语言沿袭+fu-chip 同款三件）：描边转 --focus、底转 surface-2、字转 accent-ink；瞬时切换零转场（允许清单不扩） */
+  .hero-chip:hover { border-color: var(--focus); background: var(--surface-2); }
+  .hero-chip:hover .hero-chip-txt { color: var(--accent-ink); }
+}
+@media (max-width: 540px) {
+  /* ≤540 空态密排（沿 4.0 用户拍板口径）：title fs-20+间距收一档+chips 密排
+     ——保「hero 全件+输入区」同进 375×667 首屏且余量放大（居中极简天然矮于
+     三内容卡）；字串零改动，仅排版密度档。 */
+  .hero { padding-top: 8px; }
+  .hero-emblem { margin-bottom: 12px; }
+  .hero-emblem svg { width: 32px; height: 32px; }
+  .hero-kicker { margin-bottom: 8px; }
+  .hero-title { font-size: var(--fs-20); line-height: 1.3; margin-bottom: 16px; }
+  .hero-chips { gap: 6px; }
+  .hero-chip { padding: 6px 12px; }
+}
