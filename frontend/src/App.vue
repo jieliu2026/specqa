@@ -939,7 +939,7 @@ onBeforeUnmount(function () {
         </div>
         <div class="disclaimer">内容由 AI 生成，请注意甄别与核实重要信息</div>
         <div class="disclaimer coverage">已收录：3GPP 标准/中国行标/设备商与运营商公开白皮书/学术教材/行业论坛精选（持续扩展）</div>
-        <div class="icp"><a href="https://beian.miit.gov.cn" target="_blank" rel="noopener noreferrer"><span>湘ICP备2026043575号</span></a><a href="https://beian.mps.gov.cn/#/query/webSearch?code=43042102000151" target="_blank" rel="noopener noreferrer"><img class="icp-icon" :src="'/static/beian-police.png'" alt="公安备案标识" width="14" height="14"><span>湘公网安备43042102000151号</span></a></div>
+        <!-- 公开版：备案脚注按发布形态移除 -->
       </footer>
     </div>
   </div>

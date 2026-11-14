@@ -36,6 +36,14 @@ flowchart LR
 | 架构决策记录 | 21 篇 ADR（公开精选见 `决策/`） | 部分公开 |
 | 服务规模 | 后端单文件 4,400 行 / 检索引擎 5,300 行 | ✅ 源码在仓 |
 
+## 界面一览
+
+| 带出处的引用式回答（亮色） | 同题深色主题 | 域外题诚实拒答 |
+|---|---|---|
+| ![cited](docs/screenshots/02-cited-answer-light.png) | ![dark](docs/screenshots/03-cited-answer-dark.png) | ![offtopic](docs/screenshots/04-offtopic-honest-light.png) |
+
+> 登录口令门／首屏见 `docs/screenshots/`；两例真实问答全过程留档见 [docs/demo-cases.md](docs/demo-cases.md)。
+
 ## 快速开始
 
 **路径一（无需 API key，验证工程质量）**：
