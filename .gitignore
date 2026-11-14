@@ -7,3 +7,5 @@ server.log
 data/
 log/
 .pytest_cache/
+demo/vectors/
+demo/usage.jsonl
