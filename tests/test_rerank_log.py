@@ -169,7 +169,9 @@ class ProbeWorkerTest(unittest.TestCase):
     def test_success_journal_line_and_ledger(self):
         api = self._mock_api()
         svc = _FakeProbeSvc(_CANDS)
-        logged = self._run(svc)
+        with mock.patch.object(server, "_rerank_log_resolve_endpoint",
+                               lambda: ("https://rerank.test", "k-test")):
+            logged = self._run(svc)
         m = [ln for ln in logged.splitlines() if ln.startswith("[rerank_probe]")]
         self.assertEqual(len(m), 1)
         self.assertRegex(m[0], _PROBE_LINE_RE)
@@ -198,7 +200,9 @@ class ProbeWorkerTest(unittest.TestCase):
 
     def test_timeout_or_failure_skips_without_retry(self):
         api = self._mock_api(exc=TimeoutError("t"))
-        logged = self._run(_FakeProbeSvc(_CANDS))
+        with mock.patch.object(server, "_rerank_log_resolve_endpoint",
+                               lambda: ("https://rerank.test", "k-test")):
+            logged = self._run(_FakeProbeSvc(_CANDS))
         self.assertEqual(len(api), 1)                       # 零重试
         self.assertIn("err=TimeoutError skip=1", logged)
         self.assertEqual(self._ledger_lines(), [])          # 失败不入台账

@@ -321,7 +321,7 @@ class ErrTelemetryTest(unittest.TestCase):
             raise RuntimeError("boom")
 
     def setUp(self):
-        pii_mask._ERR_LAST[0] = 0.0   # 复位限频窗口
+        pii_mask._ERR_LAST[0] = time.monotonic() - 3601.0   # 复位限频窗口（now-3601：不依赖机器 uptime）
 
     def test_detect_and_mask_text_err_line(self):
         out = io.StringIO()

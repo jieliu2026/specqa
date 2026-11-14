@@ -110,7 +110,7 @@ class CountByPatternTest(unittest.TestCase):
         class _Boom:
             def __str__(self):
                 raise RuntimeError("boom")
-        redline_filter._ERR_LAST[0] = 0.0   # 复位限频（R5 施工后新增模块态）
+        redline_filter._ERR_LAST[0] = time.monotonic() - 3601.0   # 复位限频（R5 施工后新增模块态）
         out = io.StringIO()
         with contextlib.redirect_stdout(out):
             c = redline_filter.count_by_pattern(_Boom())
@@ -121,7 +121,7 @@ class CountByPatternTest(unittest.TestCase):
         class _Boom:
             def __str__(self):
                 raise RuntimeError("boom")
-        redline_filter._ERR_LAST[0] = 0.0
+        redline_filter._ERR_LAST[0] = time.monotonic() - 3601.0
         out = io.StringIO()
         with contextlib.redirect_stdout(out):
             redline_filter.count_by_pattern(_Boom())
@@ -179,7 +179,7 @@ class ObserveAnswerTest(unittest.TestCase):
         # log 槽自身炸：绝不外抛、返回 None（fail-open；R5 遥测行被限频/吞）
         def boom(*a, **k):
             raise OSError("log sink broken")
-        redline_filter._ERR_LAST[0] = 0.0
+        redline_filter._ERR_LAST[0] = time.monotonic() - 3601.0
         ret = redline_filter.observe_answer("log_only", H_ADV_CMP, "ab12cd34",
                                             log=boom)
         self.assertIsNone(ret)
