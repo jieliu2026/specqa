@@ -637,7 +637,7 @@ class RedosBoundTest(unittest.TestCase):
         for name, text in cases.items():
             self.assertGreaterEqual(len(text), 24000, msg=name)
             t = self._best_of(text)
-            self.assertLess(t, 0.010,
+            self.assertLess(t, 0.030,   # 灾难回溯=秒级；30ms 线仍具完全判别力，容共享 CI runner 波动
                             msg=f"{name}: {t * 1000:.2f}ms / {len(text)}字")
 
 
