@@ -3054,6 +3054,16 @@ async def logout(request: Request):
     return resp
 
 
+APP_NAME = "specqa"
+APP_VERSION = "0.1.0"
+
+
+@app.get("/api/version")
+async def version():
+    """基础信息位（无鉴权：非敏感——仅名与版本号，供前端/脚本自检）。"""
+    return {"name": APP_NAME, "version": APP_VERSION}
+
+
 @app.api_route("/api/health", methods=["GET", "POST"])
 async def health(request: Request):
     """分级健康检查（2026-09-21 批1：关无鉴权侦察面；批2：会话 cookie 也可过级）。
