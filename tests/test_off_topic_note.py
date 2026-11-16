@@ -221,7 +221,7 @@ class FrontendSurfaceTest(unittest.TestCase):
         self.assertIn("offtopic note", html)
         # 页脚覆盖公告（P2-17 期望管理）
         self.assertIn(
-            "已收录：3GPP 标准/中国行标/设备商与运营商公开白皮书/学术教材/行业论坛精选（持续扩展）",
+            "已收录：规范类语料（demo 库：企业运维规范 51 块；生产库约 8.3 万块，版权约束不入公开仓）",
             html)
 
     def test_vue_frontend_wiring(self):
