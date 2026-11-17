@@ -9,3 +9,4 @@ log/
 .pytest_cache/
 demo/vectors/
 demo/usage.jsonl
+建库/logs/
