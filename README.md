@@ -57,13 +57,13 @@ venv/bin/python -m pytest tests/ -q     # 1,340+ 用例离线全绿
 
 ```bash
 cp .env.example .env                                  # 填 DASHSCOPE_API_KEY
-venv/bin/python 建库/scripts/demo_corpus_gen.py       # 生成自撰演示语料 51 块（虚构企业规范，零版权负担）
+venv/bin/python 建库/scripts/demo_corpus_gen.py       # 生成自撰三档演示语料 103 块（虚构家居制造企业：生产运营/产品售后/质检标准，零版权负担）
 venv/bin/python 建库/scripts/demo_build.py --dry-run  # 先看费用预估（约 0.001 元量级）
 venv/bin/python 建库/scripts/demo_build.py --yes --apply-config   # 用你的 key 嵌入 demo 向量库并接通检索
-venv/bin/python serve.py                              # http://127.0.0.1:8000 —— 问"无线接入网设备的巡检周期是多少天"看带出处的回答
+venv/bin/python serve.py                              # http://127.0.0.1:8000 —— 问"封边机的封边温度设多少？班前点检查什么？"看带出处的回答
 ```
 
-> demo 库只有 51 块，用于验证全链路（混合检索/出处条/拒答闸都会真实工作）。真实生产库约 8.3 万块（版权约束不入公开仓）。检索未启用/未命中时系统自动退直答模式并明示"本次未命中语料"——降级链本身是设计点。
+> demo 库 103 块三档（操作工/客服/质检三种角色视角），用于验证全链路（混合检索/出处条/拒答闸都会真实工作）。真实生产库约 8.3 万块（版权约束不入公开仓）。检索未启用/未命中时系统自动退直答模式并明示"本次未命中语料"——降级链本身是设计点。
 
 ## 核心工程设计
 
