@@ -87,6 +87,8 @@ def main():
         rag = cfg.setdefault("rag", {})
         rag["enabled"] = True
         rag["store_path"] = "demo/vectors/embeddings.jsonl"
+        rag["score_threshold"] = 0.58   # demo 库标定（2026-11-18 独立标定卷 60 题：
+        # in 下界 0.722／out 上界 0.522，断带中点偏域内；生产默认 0.40 系生产库标定不变）
         t = CONFIG.with_suffix(".tmp")
         t.write_text(json.dumps(cfg, ensure_ascii=False, indent=1), encoding="utf-8")
         os.replace(t, CONFIG)
