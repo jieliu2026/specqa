@@ -229,6 +229,7 @@ function maybeRestoreConv(): void {
    让位）。任何失败（401 窗口期过期/网络）=回退现状刷新行为：本地 msgs
    原样显示、选中态不设。 */
 function restoreConv(c: Conversation): void {
+  if (state.streaming) return; // 流式守卫（对齐 onConvClick）：流中恢复会整体替换 msgs 丢事件落点
   state.convSwitching = true;
   fetch('/api/conversations/' + c.id + '/messages')
     .then(function (r) {
@@ -306,6 +307,7 @@ function relTime(v: unknown): string {
 function onNewConv(): void {
   if (state.convSwitching) return;
   if (state.streaming) stop();
+  restoreConvId = null; // 用户显式弃旧会话：挂起的恢复目标随之作废（防流中换数组丢事件落点）
   state.msgs = [];
   save();
   state.currentConvId = null;
