@@ -29,7 +29,7 @@ flowchart LR
 
 | 维度 | 数值 | 可验证性 |
 |---|---|---|
-| 公开测试 | **64 件 / 1,341 用例全绿**（本仓 CI） | ✅ clone 即验 |
+| 公开测试 | **67 件 / 1,429 用例全绿**（本仓 CI） | ✅ clone 即验 |
 | 完整内部测试 | 95 件 / 3,229 用例 | 内部维护，可应要求演示 |
 | 公开评测卷 | 独立 B/C/Y 三卷 48 题（文号已脱敏） | ✅ `建库/scripts/题卷/` |
 | 内部语料规模 | 约 6.7 万块语料 / 8.3 万块×1024 维向量 | 内部维护（版权约束不入公开仓） |
@@ -50,7 +50,7 @@ flowchart LR
 ```bash
 git clone https://github.com/jieliu2026/specqa && cd specqa
 python3 -m venv venv && venv/bin/pip install -r requirements.txt
-venv/bin/python -m pytest tests/ -q     # 1,340+ 用例离线全绿
+venv/bin/python -m pytest tests/ -q     # 1,429 用例离线全绿
 ```
 
 **路径二（自带百炼/DashScope key，体验完整 RAG 问答）**：

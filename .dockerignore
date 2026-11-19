@@ -1,0 +1,12 @@
+.git
+venv
+node_modules
+frontend/node_modules
+frontend/dist
+server.log
+data
+log
+__pycache__
+.pytest_cache
+demo/vectors
+demo/usage.jsonl

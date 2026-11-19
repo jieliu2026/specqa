@@ -1,0 +1,8 @@
+services:
+  specqa:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - BAILIAN_TOKEN_PLAN_API_KEY=${BAILIAN_TOKEN_PLAN_API_KEY:-}
+    restart: unless-stopped
